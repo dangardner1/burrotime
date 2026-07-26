@@ -427,7 +427,6 @@
   }
 
   var spanishVoice = null;
-  var spanishVoiceIsMaleMatch = false;
   // The Web Speech API doesn't expose voice gender, so pick by name — these
   // are common male/female Spanish voice names across Chrome, Google Cloud/
   // Android, Safari/macOS/iOS, and Edge/Windows.
@@ -446,7 +445,6 @@
     var esVoices = speechSynthesis.getVoices().filter(function(v){ return /^es/i.test(v.lang); });
     function hints(v,list){ var n=normalize(v.name); return list.some(function(h){ return n.indexOf(h)!==-1; }); }
     var maleMatch = esVoices.find(function(v){ return hints(v,MALE_VOICE_HINTS); });
-    spanishVoiceIsMaleMatch = !!maleMatch;
     spanishVoice = maleMatch
       || esVoices.find(function(v){ return !hints(v,FEMALE_VOICE_HINTS); })
       || esVoices[0]
@@ -462,19 +460,6 @@
     pickSpanishVoice();
     speechSynthesis.onvoiceschanged = pickSpanishVoice;
   }
-  // Safari/iOS ship only one default Spanish voice ("Mónica"/"Paulina",
-  // both female) and clamp the effective pitch range harder than Chrome, so
-  // the male-fallback pitch needs to go more extreme to be audible there.
-  // Brave applies similar fingerprinting-resistance to speechSynthesis, so
-  // it needs the same treatment — feature-detected via navigator.brave,
-  // since Brave's user agent deliberately disguises itself as Chrome.
-  var isSafariBrowser = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
-  var isBraveBrowser = false;
-  if(navigator.brave && navigator.brave.isBrave){
-    navigator.brave.isBrave().then(function(v){ isBraveBrowser = !!v; }).catch(function(){});
-  }
-  var needsHardFallback = function(){ return isSafariBrowser || isBraveBrowser; };
-
   var speaking = false;
   var speechUnlocked = false;
   function unlockSpeech(){
@@ -514,16 +499,12 @@
     }
   }
   function speakPhrase(text, onEnd){
-    // Don Aurelio: a confirmed male-named voice only needs a slight lower
-    // pitch to sound natural; without one, drop the pitch hard so it reads
-    // as male regardless — harder still on Safari/Brave, which are known to
-    // clamp SpeechSynthesisUtterance.pitch to a narrower effective range
-    // than they report, so this pushes all the way to the API floor.
-    var rate, pitch;
-    if(spanishVoiceIsMaleMatch){ rate=0.95; pitch=0.9; }
-    else if(needsHardFallback()){ rate=0.78; pitch=0.02; }
-    else { rate=0.95; pitch=0.55; }
-    speakUtterance(text, spanishVoice, rate, pitch, onEnd);
+    // Don Aurelio: use a male-named voice when the browser happens to expose
+    // one (see pickSpanishVoice above), otherwise just the platform default
+    // at its natural pitch — different browsers/OSes handle pitch shifting
+    // too inconsistently (some ignore it outright) to reliably force a
+    // different-sounding voice, so this no longer fights that battle.
+    speakUtterance(text, spanishVoice, 0.95, 1, onEnd);
   }
   function speakTime(){
     var d = new Date();

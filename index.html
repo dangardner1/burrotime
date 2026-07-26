@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>El Reloj — the village timekeeper</title>
+<style>
+  :root{
+    --plum-deep:#2A1B33;
+    --brass:#E9C46A;
+    --burro:#8E8078;
+    --paper:#EFE3D2;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(120% 80% at 50% 0%, #5C3A5F 0%, var(--plum-deep) 60%, #1A1020 100%);
+    color:var(--paper);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:22px 16px 40px;
+  }
+  .wrap{width:100%;max-width:900px}
+  header{text-align:center;margin-bottom:18px}
+  .eyebrow{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+    letter-spacing:.26em;text-transform:uppercase;color:var(--brass);opacity:.85}
+  h1{font-family:Georgia,"Iowan Old Style","Times New Roman",serif;font-weight:400;font-style:italic;
+    font-size:clamp(34px,8vw,58px);margin:6px 0 4px}
+  .sub{font-size:14px;opacity:.7;margin:0 auto;max-width:46ch;line-height:1.5}
+
+  .stage{position:relative;border:1px solid rgba(242,197,124,.28);border-radius:4px;
+    overflow:hidden;background:#2A1B33;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+  svg{display:block;width:100%;height:auto}
+
+  .readout{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:baseline;justify-content:center;
+    margin-top:16px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .readout .big{font-size:clamp(26px,6vw,38px);color:var(--brass);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+  .readout .lbl{font-size:11px;letter-spacing:.22em;text-transform:uppercase;opacity:.55}
+
+  .controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px}
+  button{font-family:Georgia,serif;font-size:16px;padding:12px 22px;border-radius:2px;cursor:pointer;
+    border:1px solid var(--brass);background:linear-gradient(180deg,#E9C46A,#C99B45);color:#2A1B33;
+    transition:transform .15s ease, filter .15s ease}
+  button.ghost{background:transparent;color:var(--brass)}
+  button:hover{filter:brightness(1.08)}
+  button:active{transform:translateY(1px)}
+  button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+  button[disabled]{opacity:.35;cursor:default;filter:none}
+
+  .patience{margin-top:14px;text-align:center;font-family:ui-monospace,Menlo,monospace;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.6}
+  .patience b{color:var(--brass);font-weight:400}
+
+  .bench{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:14px}
+  .benchlbl{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.2em;
+    text-transform:uppercase;opacity:.45;width:100%;text-align:center}
+  button.tiny{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.1em;
+    padding:7px 13px;background:transparent;color:var(--brass);border-color:rgba(233,196,106,.45)}
+
+  .soundnote{margin-top:8px;text-align:center;font-family:ui-monospace,Menlo,monospace;
+    font-size:10px;letter-spacing:.08em;color:#E48B6B;opacity:0;max-width:56ch;
+    margin-left:auto;margin-right:auto;line-height:1.6}
+  .soundnote.show{opacity:.85}
+
+  footer{margin-top:20px;text-align:center;font-size:12px;line-height:1.7;opacity:.5;max-width:58ch}
+  footer a{color:var(--brass);opacity:.9}
+
+  /* animated pieces */
+  #walker{transform:translateX(-320px);transition:transform 1.5s cubic-bezier(.3,.7,.4,1)}
+  #pouch{transition:transform .75s cubic-bezier(.34,1.4,.5,1)}
+  #arm{transition:transform .6s cubic-bezier(.34,1.3,.5,1);transform-origin:645px 275px}
+  #torso{transition:transform .6s ease;transform-origin:670px 340px}
+  #tail{transition:transform .5s cubic-bezier(.34,1.6,.5,1);transform-origin:548px 208px}
+  #earNear{transform-origin:322px 118px}
+  #earFar{transform-origin:345px 126px}
+  #burroRig{transform-origin:430px 320px}
+  #beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker{opacity:0;transition:opacity .4s ease}
+  #magnifier{transform-origin:790px 106px;transform:scale(.6);
+    transition:opacity .4s ease,transform .5s cubic-bezier(.34,1.5,.5,1)}
+  #burroEye{transition:transform .4s ease}
+
+  .walking #walker{transform:translateX(0)}
+  .asking  #bubbleWalker{opacity:1}
+  .reaching #pouch{transform:translate(-56px,-6px) rotate(-16deg)}
+  .reaching #arm{transform:rotate(-9deg)}
+  .reaching #torso{transform:rotate(-5deg)}
+  .reaching #tail{transform:rotate(-26deg)}
+  .sighting #beam{opacity:1}
+  .sighting #magnifier{opacity:1;transform:scale(1)}
+  .sighting #burroEye{transform:translateX(-4px)}
+  .telling #bubbleMan{opacity:1}
+  .grumbling #bubbleBurro{opacity:1}
+
+  #beamCore{stroke-dasharray:7 9;animation:march 1.1s linear infinite}
+  @keyframes march{to{stroke-dashoffset:-32}}
+
+  @media (prefers-reduced-motion:reduce){
+    #walker,#pouch,#arm,#torso,#tail,#beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#burroEye
+      {transition-duration:.01ms}
+    #beamCore{animation:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Plaza de la Merced &middot; est. forever</div>
+    <h1>El Reloj</h1>
+    <p class="sub">Don Aurelio has told this village the time for forty-one years. He has never owned a watch. He has, however, always owned a burro — and the burro has opinions.</p>
+  </header>
+
+  <div class="stage" id="stage">
+    <svg id="scene" viewBox="0 0 900 540" role="img"
+      aria-label="A dusk plaza. A passerby asks an old man the time; he shifts his burro aside to sight the distant clock tower, and the burro objects audibly.">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4A2F52"/><stop offset="45%" stop-color="#8E5063"/>
+          <stop offset="78%" stop-color="#D9834F"/><stop offset="100%" stop-color="#F2C57C"/>
+        </linearGradient>
+        <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#B07C51"/><stop offset="100%" stop-color="#5E3A26"/>
+        </linearGradient>
+        <linearGradient id="beamGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#F2C57C" stop-opacity="0"/>
+          <stop offset="35%" stop-color="#F2C57C" stop-opacity=".55"/>
+          <stop offset="100%" stop-color="#FFF3D6" stop-opacity=".9"/>
+        </linearGradient>
+        <radialGradient id="sunGlow" cx="50%" cy="50%">
+          <stop offset="0%" stop-color="#FFE9BE" stop-opacity=".95"/>
+          <stop offset="100%" stop-color="#FFE9BE" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- SKY -->
+      <rect x="0" y="0" width="900" height="352" fill="url(#sky)"/>
+      <circle cx="180" cy="268" r="120" fill="url(#sunGlow)"/>
+      <circle cx="180" cy="272" r="46" fill="#FFE2AE" opacity=".9"/>
+      <path d="M300 118 q9-7 17 0 q8-7 17 0" fill="none" stroke="#3B2540" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>
+      <path d="M356 96 q7-6 13 0 q6-6 13 0" fill="none" stroke="#3B2540" stroke-width="2.2" stroke-linecap="round" opacity=".35"/>
+
+      <!-- SIERRA -->
+      <path d="M0 352 L0 300 L120 246 L215 300 L300 258 L410 316 L520 262 L640 314 L760 268 L900 322 L900 352 Z" fill="#6B4360" opacity=".85"/>
+      <path d="M0 352 L0 330 L150 296 L290 332 L430 302 L580 336 L720 306 L900 340 L900 352 Z" fill="#54334F"/>
+
+      <!-- DISTANT TOWN -->
+      <g opacity=".95">
+        <rect x="60" y="322" width="90" height="30" fill="#A76B49"/>
+        <rect x="150" y="330" width="120" height="22" fill="#8E5A3E"/>
+        <rect x="600" y="326" width="140" height="26" fill="#A76B49"/>
+        <rect x="740" y="332" width="160" height="20" fill="#8E5A3E"/>
+        <rect x="285" y="334" width="90" height="18" fill="#9C6144"/>
+      </g>
+
+      <!-- CLOCK TOWER -->
+      <g id="tower">
+        <rect x="495" y="300" width="42" height="52" fill="#D6A068"/>
+        <rect x="495" y="300" width="42" height="6" fill="#B87B4E"/>
+        <path d="M492 300 L516 280 L540 300 Z" fill="#8E5A3E"/>
+        <rect x="513" y="284" width="5" height="8" fill="#8E5A3E"/>
+        <rect x="501" y="338" width="10" height="14" fill="#8E5A3E" opacity=".6"/>
+        <rect x="521" y="338" width="10" height="14" fill="#8E5A3E" opacity=".6"/>
+        <circle cx="515" cy="322" r="13" fill="#F6EBD6" stroke="#7A4A2E" stroke-width="2.5"/>
+        <circle cx="515" cy="322" r="1.6" fill="#3A2418"/>
+        <line id="twrHour" x1="515" y1="322" x2="515" y2="315" stroke="#3A2418" stroke-width="2.4" stroke-linecap="round"/>
+        <line id="twrMin" x1="515" y1="322" x2="515" y2="312" stroke="#3A2418" stroke-width="1.7" stroke-linecap="round"/>
+      </g>
+
+      <!-- GROUND -->
+      <rect x="0" y="352" width="900" height="188" fill="url(#ground)"/>
+      <g stroke="#6E4429" stroke-width="2" stroke-linecap="round" opacity=".45">
+        <path d="M40 400 h58"/><path d="M700 396 h70"/><path d="M820 440 h52"/>
+        <path d="M240 470 h64"/><path d="M600 486 h80"/>
+      </g>
+      <ellipse cx="430" cy="382" rx="150" ry="16" fill="#4E2F1E" opacity=".35"/>
+      <ellipse cx="672" cy="384" rx="82" ry="13" fill="#4E2F1E" opacity=".3"/>
+
+      <!-- ===== BURRO ===== -->
+      <g id="burroRig">
+        <rect x="366" y="298" width="15" height="84" rx="6" fill="#6E625C"/>
+        <rect x="470" y="298" width="15" height="84" rx="6" fill="#6E625C"/>
+        <g id="tail">
+          <path d="M548 208 q22 34 12 74" fill="none" stroke="#7E7169" stroke-width="9" stroke-linecap="round"/>
+          <ellipse cx="561" cy="286" rx="8" ry="15" fill="#4F4641" transform="rotate(12 561 286)"/>
+        </g>
+        <ellipse cx="420" cy="250" rx="108" ry="59" fill="var(--burro)"/>
+        <circle cx="512" cy="256" r="53" fill="#96887F"/>
+        <path d="M356 206 q60 -18 118 4 l-10 44 q-52 -18 -100 -4 Z" fill="#B4573F"/>
+        <path d="M356 206 q60 -18 118 4" fill="none" stroke="#8C3E2C" stroke-width="4"/>
+        <path d="M364 232 q56 -14 106 2" fill="none" stroke="#E4C07A" stroke-width="4"/>
+        <path d="M344 224 q-14 -44 -34 -64 l40 -22 q22 38 34 66 Z" fill="var(--burro)"/>
+        <ellipse cx="298" cy="140" rx="40" ry="24" fill="#96887F" transform="rotate(-24 298 140)"/>
+        <ellipse cx="268" cy="122" rx="17" ry="13" fill="#6E625C" transform="rotate(-24 268 122)"/>
+        <circle cx="262" cy="118" r="2.6" fill="#332C29"/>
+        <g id="earNear">
+          <ellipse cx="322" cy="96" rx="9" ry="27" fill="#96887F" transform="rotate(-16 322 96)"/>
+          <ellipse cx="322" cy="98" rx="4" ry="18" fill="#5F544F" transform="rotate(-16 322 98)"/>
+        </g>
+        <g id="earFar"><ellipse cx="345" cy="104" rx="9" ry="26" fill="#8E8078" transform="rotate(4 345 104)"/></g>
+        <path d="M318 106 q22 26 34 60" fill="none" stroke="#5A4F49" stroke-width="10" stroke-linecap="round"/>
+        <g id="burroEye"><circle cx="306" cy="128" r="4.6" fill="#2E2724"/><circle cx="307.4" cy="126.6" r="1.4" fill="#EDE2D4"/></g>
+        <g id="pouch">
+          <ellipse cx="515" cy="323" rx="23" ry="27" fill="#7E7169"/>
+          <ellipse cx="515" cy="317" rx="23" ry="21" fill="#8B7E75"/>
+          <path d="M515 302 v42" stroke="#6B605A" stroke-width="2" opacity=".7"/>
+        </g>
+        <rect x="348" y="296" width="19" height="88" rx="8" fill="#8E8078"/>
+        <rect x="348" y="366" width="19" height="18" rx="4" fill="#4A423E"/>
+        <rect x="545" y="296" width="19" height="88" rx="8" fill="#8E8078"/>
+        <rect x="545" y="366" width="19" height="18" rx="4" fill="#4A423E"/>
+        <rect x="366" y="366" width="15" height="16" rx="4" fill="#3F3835"/>
+        <rect x="470" y="366" width="15" height="16" rx="4" fill="#3F3835"/>
+      </g>
+
+      <!-- ===== DON AURELIO ===== -->
+      <g id="man">
+        <rect x="628" y="336" width="96" height="48" rx="3" fill="#8A5A38"/>
+        <rect x="628" y="336" width="96" height="7" rx="2" fill="#A76F47"/>
+        <path d="M636 348 h80 M636 366 h80" stroke="#6F4629" stroke-width="3"/>
+        <g id="torso">
+          <path d="M646 336 q-26 22 -44 26 l6 16 q40 -6 62 -26 Z" fill="#5C6B7A"/>
+          <ellipse cx="600" cy="378" rx="17" ry="9" fill="#4A3A2E"/>
+          <path d="M642 268 q30 -12 58 0 l10 74 q-38 12 -76 0 Z" fill="#E4D8C2"/>
+          <path d="M646 292 q28 -10 52 0" fill="none" stroke="#C6B79C" stroke-width="3"/>
+          <path d="M646 272 q28 -10 52 0 l-4 20 q-24 -8 -46 0 Z" fill="#9C4F55"/>
+          <path d="M700 282 q22 20 18 48" fill="none" stroke="#E4D8C2" stroke-width="15" stroke-linecap="round"/>
+          <path d="M722 300 q10 30 4 68" fill="none" stroke="#7A5334" stroke-width="6" stroke-linecap="round"/>
+          <circle cx="672" cy="242" r="23" fill="#C99A72"/>
+          <path d="M654 250 q18 12 36 0 q-4 16 -18 16 q-14 0 -18 -16 Z" fill="#EDE6DA"/>
+          <circle cx="656" cy="238" r="3" fill="#2E2119"/>
+          <path d="M648 231 q8 -4 15 -1" fill="none" stroke="#EDE6DA" stroke-width="3" stroke-linecap="round"/>
+          <ellipse cx="672" cy="222" rx="46" ry="11" fill="#D8B472"/>
+          <path d="M646 222 q4 -30 26 -30 q22 0 26 30 Z" fill="#E3C489"/>
+          <path d="M648 214 q24 8 48 0" fill="none" stroke="#A9834A" stroke-width="4"/>
+          <g id="arm">
+            <path d="M645 275 q-52 24 -100 42" fill="none" stroke="#E4D8C2" stroke-width="14" stroke-linecap="round"/>
+            <circle cx="541" cy="319" r="9" fill="#C99A72"/>
+          </g>
+        </g>
+      </g>
+
+      <!-- ===== PASSERBY ===== -->
+      <g id="walker">
+        <ellipse cx="188" cy="448" rx="46" ry="10" fill="#4E2F1E" opacity=".35"/>
+        <path d="M164 372 h50 l20 74 h-90 Z" fill="#3E6B72"/>
+        <path d="M144 446 h90" stroke="#2E545A" stroke-width="6"/>
+        <ellipse cx="170" cy="450" rx="12" ry="6" fill="#33251C"/>
+        <ellipse cx="206" cy="450" rx="12" ry="6" fill="#33251C"/>
+        <path d="M162 316 q26 -10 52 0 l4 58 q-30 10 -60 0 Z" fill="#F0E5D4"/>
+        <path d="M162 316 q26 -10 52 0 l-6 26 q-20 -8 -40 0 Z" fill="#7C4B86"/>
+        <path d="M208 340 q10 30 4 64" fill="none" stroke="#7C4B86" stroke-width="10" stroke-linecap="round"/>
+        <path d="M166 328 q-24 20 -22 46" fill="none" stroke="#F0E5D4" stroke-width="13" stroke-linecap="round"/>
+        <g>
+          <path d="M120 372 h48 l-7 34 h-34 Z" fill="#C79A5C"/>
+          <path d="M120 372 h48" stroke="#A97C42" stroke-width="5"/>
+          <path d="M128 372 q16 -22 32 0" fill="none" stroke="#A97C42" stroke-width="4"/>
+          <circle cx="134" cy="368" r="7" fill="#B4573F"/>
+          <circle cx="148" cy="365" r="8" fill="#7F9455"/>
+          <circle cx="160" cy="369" r="6" fill="#D9A03F"/>
+        </g>
+        <circle cx="190" cy="298" r="21" fill="#C99A72"/>
+        <path d="M169 296 q0 -26 21 -26 q21 0 21 26 q-8 -12 -21 -12 q-13 0 -21 12 Z" fill="#2E2119"/>
+        <path d="M190 270 q-24 4 -21 32 l-8 4 q-6 -44 29 -42 Z" fill="#7C4B86"/>
+        <circle cx="204" cy="298" r="2.8" fill="#2E2119"/>
+        <path d="M198 306 q8 4 14 -1" fill="none" stroke="#8A5A44" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+
+      <!-- SIGHTLINE -->
+      <g id="beam">
+        <path d="M650 250 L515 322" stroke="url(#beamGrad)" stroke-width="13" stroke-linecap="round" opacity=".5"/>
+        <path id="beamCore" d="M650 250 L515 322" stroke="#FFF3D6" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="515" cy="322" r="17" fill="none" stroke="#FFF3D6" stroke-width="2" opacity=".8"/>
+      </g>
+
+      <!-- MAGNIFIER -->
+      <g id="magnifier">
+        <circle cx="790" cy="106" r="64" fill="#1F1526" opacity=".92"/>
+        <circle cx="790" cy="106" r="64" fill="none" stroke="#E9C46A" stroke-width="3"/>
+        <circle cx="790" cy="106" r="53" fill="#F6EBD6"/>
+        <g id="ticks" stroke="#7A4A2E" stroke-width="2.5" stroke-linecap="round"></g>
+        <text x="790" y="82" text-anchor="middle" font-family="Georgia,serif" font-size="10" fill="#8A6A4A" letter-spacing="2">XII</text>
+        <circle cx="790" cy="106" r="3.6" fill="#3A2418"/>
+        <line id="bigHour" x1="790" y1="106" x2="790" y2="76" stroke="#3A2418" stroke-width="6.5" stroke-linecap="round"/>
+        <line id="bigMin" x1="790" y1="106" x2="790" y2="62" stroke="#3A2418" stroke-width="4" stroke-linecap="round"/>
+        <line id="bigSec" x1="790" y1="106" x2="790" y2="58" stroke="#B4573F" stroke-width="1.8" stroke-linecap="round"/>
+        <text x="790" y="184" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#E9C46A" letter-spacing="2">TORRE DE LA MERCED</text>
+      </g>
+
+      <!-- SPEECH -->
+      <g id="bubbleWalker">
+        <rect x="60" y="192" width="228" height="56" rx="10" fill="#EFE3D2"/>
+        <path d="M176 248 l-2 20 l22 -20 Z" fill="#EFE3D2"/>
+        <text id="walkerLine1" x="174" y="217" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#2A1B33">¿Qué hora es, don Aurelio?</text>
+        <text id="walkerLine2" x="174" y="236" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6B5A47" letter-spacing="1.2">EXCUSE ME — DO YOU HAVE THE TIME?</text>
+      </g>
+
+      <g id="bubbleMan">
+        <rect x="738" y="196" width="158" height="58" rx="10" fill="#EFE3D2"/>
+        <path d="M738 224 l-22 8 l22 12 Z" fill="#EFE3D2"/>
+        <text id="sayTime" x="817" y="222" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#2A1B33">Son las 3:47</text>
+        <text id="sayPart" x="817" y="240" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6B5A47" letter-spacing="1.2">DE LA TARDE</text>
+      </g>
+
+      <g id="bubbleBurro">
+        <rect x="322" y="24" width="228" height="52" rx="10" fill="#EFE3D2"/>
+        <path d="M352 76 l-8 18 l26 -18 Z" fill="#EFE3D2"/>
+        <text id="burroLine1" x="436" y="48" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="17" fill="#2A1B33">…</text>
+        <text id="burroLine2" x="436" y="66" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6B5A47" letter-spacing="1.2">&#160;</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="readout">
+    <span class="lbl">Local time</span>
+    <span class="big" id="digital">--:--:--</span>
+    <span class="lbl" id="zone">&#160;</span>
+  </div>
+
+  <div class="controls">
+    <button id="ask">Send someone over to ask</button>
+    <button id="sound" class="ghost" aria-pressed="true">Sound on</button>
+  </div>
+
+  <div class="patience">Burro's patience today: <b id="patience">intact</b></div>
+
+  <div class="bench">
+    <span class="benchlbl">Audition a reaction</span>
+    <button class="tiny" data-snd="grumble">grumble</button>
+    <button class="tiny" data-snd="snort">snort</button>
+    <button class="tiny" data-snd="bray1">single bray</button>
+    <button class="tiny" data-snd="bray3">full bray</button>
+    <button class="tiny" data-snd="creak">creak tail only</button>
+    <button class="tiny" data-snd="sigh">sigh</button>
+  </div>
+
+  <p class="soundnote" id="soundnote">Recording didn't load — the burro is performing in mime today. Sound will resume once a reachable audio source is configured.</p>
+
+  <footer>
+    The tower clock shows your device's local time. Every bray, snort, grumble and sigh here is drawn from a real
+    field recording of a donkey (not synthesized), reshaped with speed, trim and volume for each reaction — source
+    credited below. Ask repeatedly at your own risk.
+    <br><br>
+    Recording: <a href="https://commons.wikimedia.org/wiki/Special:FilePath/Donkey%20Braying.ogg" target="_blank" rel="noopener">Wikimedia Commons — Donkey Braying.ogg</a>,
+    public domain / CC0. If this link has moved, swap the URL in <code>SOUND_SOURCE</code> at the top of the script
+    for any donkey-bray recording (e.g. from
+    <a href="https://bigsoundbank.com/donkeys-braying-s1548.html" target="_blank" rel="noopener">bigsoundbank.com</a>
+    or <a href="https://freesound.org/people/felix.blume/packs/9465/" target="_blank" rel="noopener">freesound.org</a>).
+  </footer>
+</div>
+
+<script>
+(function(){
+  var stage = document.getElementById('stage');
+  var askBtn = document.getElementById('ask');
+  var sndBtn = document.getElementById('sound');
+  var patienceEl = document.getElementById('patience');
+  var soundNote = document.getElementById('soundnote');
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- clock ---------- */
+  var ticks = document.getElementById('ticks');
+  for (var i=0;i<12;i++){
+    var a=i*30*Math.PI/180, r1=(i%3===0?41:45), r2=50;
+    var l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',790+r1*Math.sin(a)); l.setAttribute('y1',106-r1*Math.cos(a));
+    l.setAttribute('x2',790+r2*Math.sin(a)); l.setAttribute('y2',106-r2*Math.cos(a));
+    if(i%3!==0) l.setAttribute('stroke-width','1.4');
+    ticks.appendChild(l);
+  }
+  function hand(el,cx,cy,len,deg){
+    var a=deg*Math.PI/180;
+    el.setAttribute('x1',cx); el.setAttribute('y1',cy);
+    el.setAttribute('x2',cx+len*Math.sin(a)); el.setAttribute('y2',cy-len*Math.cos(a));
+  }
+  function pad(n){ return n<10?'0'+n:''+n; }
+  function partOfDay(h){
+    if(h<6) return 'DE LA MADRUGADA';
+    if(h<12) return 'DE LA MAÑANA';
+    if(h<20) return 'DE LA TARDE';
+    return 'DE LA NOCHE';
+  }
+  function tick(){
+    var d=new Date(), h=d.getHours(), m=d.getMinutes(), s=d.getSeconds();
+    var hDeg=(h%12)*30+m*0.5+s*(0.5/60), mDeg=m*6+s*0.1, sDeg=s*6;
+    hand(document.getElementById('twrHour'),515,322,7,hDeg);
+    hand(document.getElementById('twrMin'),515,322,10,mDeg);
+    hand(document.getElementById('bigHour'),790,106,30,hDeg);
+    hand(document.getElementById('bigMin'),790,106,44,mDeg);
+    hand(document.getElementById('bigSec'),790,106,48,sDeg);
+    var h12=h%12; if(h12===0) h12=12;
+    document.getElementById('sayTime').textContent=(h12===1?'Es la ':'Son las ')+h12+':'+pad(m);
+    document.getElementById('sayPart').textContent=partOfDay(h);
+    document.getElementById('digital').textContent=pad(h)+':'+pad(m)+':'+pad(s);
+  }
+  try{ document.getElementById('zone').textContent=Intl.DateTimeFormat().resolvedOptions().timeZone||''; }catch(e){}
+  tick(); setInterval(tick,1000);
+
+  /* ---------- audio: real recording, reshaped per reaction ----------
+     One field recording of a donkey bray is the sole audio source. Every
+     reaction below is that same clip played back with a different start
+     point, duration, rate and volume — no oscillators, no synthesis. */
+  var SOUND_SOURCE = 'https://commons.wikimedia.org/wiki/Special:FilePath/Donkey%20Braying.ogg';
+  var muted = false;
+  var sourceFailed = false;
+  var pool = [];       // small pool of <audio> elements so overlapping cues don't cut each other off
+  var POOL_SIZE = 4;
+  var poolReady = false;
+
+  function primeAudio(){
+    if(pool.length) return;
+    for(var i=0;i<POOL_SIZE;i++){
+      var el = new Audio(SOUND_SOURCE);
+      el.preload = 'auto';
+      el.crossOrigin = 'anonymous';
+      try{ el.preservesPitch = false; el.mozPreservesPitch = false; el.webkitPreservesPitch = false; }catch(e){}
+      el.addEventListener('canplaythrough', function(){ poolReady = true; }, {once:true});
+      el.addEventListener('error', function(){
+        if(sourceFailed) return;
+        sourceFailed = true;
+        soundNote.classList.add('show');
+      });
+      pool.push(el);
+    }
+  }
+  function nextPlayer(){
+    for(var i=0;i<pool.length;i++){ if(pool[i].paused || pool[i].ended) return pool[i]; }
+    return pool[0];
+  }
+  /* clip: {start, dur, rate, vol} slices the single recording into a reaction */
+  function clip(spec){
+    if(muted || sourceFailed) return;
+    primeAudio();
+    var el = nextPlayer();
+    try{
+      el.pause();
+      el.currentTime = spec.start;
+      el.playbackRate = spec.rate || 1;
+      el.volume = spec.vol==null ? 1 : spec.vol;
+      el.play().catch(function(){ /* needs a user gesture first — fine, next click will work */ });
+      if(spec.dur){
+        var target = el;
+        setTimeout(function(){
+          if(!target.paused){
+            var fade = setInterval(function(){
+              if(target.volume>0.06){ target.volume = Math.max(0, target.volume-0.06); }
+              else{ clearInterval(fade); target.pause(); }
+            },18);
+          }
+        }, spec.dur*1000);
+      }
+    }catch(e){}
+  }
+
+  /* start/dur are best-effort offsets into a typical bray recording:
+     the intake "hee" runs first, the loud "haw" mid-clip, a raspy tail
+     trails after — real recordings vary, so these are approximate windows. */
+  function grumble(){ clip({start:0.0, dur:0.7, rate:0.72, vol:0.45}); }
+  function snort(){   clip({start:0.05, dur:0.28, rate:1.35, vol:0.5}); }
+  function bray(cycles){
+    cycles = cycles || 1;
+    clip({start:0, dur: cycles>=3?2.6:1.1, rate:1.0, vol:1});
+  }
+  function creak(){ clip({start:1.6, dur:0.5, rate:0.6, vol:0.4}); }
+  function sigh(){  clip({start:0.2, dur:1.1, rate:0.55, vol:0.35}); }
+
+  sndBtn.addEventListener('click',function(){
+    muted=!muted;
+    sndBtn.textContent = muted ? 'Sound off' : 'Sound on';
+    sndBtn.setAttribute('aria-pressed', String(!muted));
+    if(!muted) primeAudio();
+  });
+
+  /* ---------- burro body language ---------- */
+  function anim(el,frames,ms){
+    if(!el||reduce||!el.animate) return;
+    try{ el.animate(frames,{duration:ms,easing:'ease-out'}); }catch(e){}
+  }
+  var earNear=document.getElementById('earNear'),
+      earFar=document.getElementById('earFar'),
+      rig=document.getElementById('burroRig');
+
+  function react(level){
+    if(level===1){
+      grumble();
+      anim(earNear,[{transform:'rotate(0deg)'},{transform:'rotate(-22deg)'},{transform:'rotate(0deg)'}],700);
+    } else if(level===2){
+      snort(); setTimeout(function(){ bray(1); },220);
+      anim(earNear,[{transform:'rotate(0deg)'},{transform:'rotate(-34deg)'},{transform:'rotate(6deg)'},{transform:'rotate(0deg)'}],900);
+      anim(earFar,[{transform:'rotate(0deg)'},{transform:'rotate(28deg)'},{transform:'rotate(0deg)'}],900);
+      anim(rig,[{transform:'translateY(0)'},{transform:'translateY(-7px)'},{transform:'translateY(0)'}],520);
+    } else if(level===3){
+      bray(3);
+      anim(earNear,[{transform:'rotate(0deg)'},{transform:'rotate(-46deg)'},{transform:'rotate(14deg)'},{transform:'rotate(-30deg)'},{transform:'rotate(0deg)'}],1500);
+      anim(earFar,[{transform:'rotate(0deg)'},{transform:'rotate(40deg)'},{transform:'rotate(-10deg)'},{transform:'rotate(0deg)'}],1500);
+      anim(rig,[{transform:'translate(0,0) rotate(0deg)'},{transform:'translate(6px,-14px) rotate(-2.5deg)'},
+                {transform:'translate(-4px,0) rotate(1.5deg)'},{transform:'translate(3px,-8px) rotate(-1deg)'},
+                {transform:'translate(0,0) rotate(0deg)'}],1400);
+    } else {
+      sigh();
+      anim(earNear,[{transform:'rotate(0deg)'},{transform:'rotate(-58deg)'}],900);
+      anim(earFar,[{transform:'rotate(0deg)'},{transform:'rotate(-46deg)'}],900);
+      anim(rig,[{transform:'translateY(0)'},{transform:'translateY(4px)'}],900);
+    }
+  }
+
+  /* ---------- the scene, as a script ---------- */
+  var LINES=[
+    {es:'…',                   en:'(EARS FLATTEN)',                p:'intact'},
+    {es:'Otra vez. En serio.', en:'AGAIN. SERIOUSLY.',             p:'fraying'},
+    {es:'¡Ya basta, Aurelio!', en:'THAT IS ENOUGH, AURELIO!',      p:'gone'},
+    {es:'Ya ni me molesto.',   en:'I DO NOT EVEN FLINCH ANYMORE.', p:'transcendent'}
+  ];
+  var THANKS={es:'Gracias, don Aurelio.',en:'THANK YOU — AND SORRY, BURRO.'};
+  var ASK={es:'¿Qué hora es, don Aurelio?',en:'EXCUSE ME — DO YOU HAVE THE TIME?'};
+
+  var w1=document.getElementById('walkerLine1'), w2=document.getElementById('walkerLine2');
+  var b1=document.getElementById('burroLine1'), b2=document.getElementById('burroLine2');
+  var count=0, running=false, timers=[];
+
+  function at(ms,fn){ timers.push(setTimeout(fn, reduce?Math.min(ms,80):ms)); }
+  function clearAll(){ for(var i=0;i<timers.length;i++) clearTimeout(timers[i]); timers=[]; }
+
+  function run(){
+    if(running) return;
+    running=true; askBtn.disabled=true;
+    clearAll();
+    stage.className='stage';
+    count++;
+    var L=LINES[Math.min(count-1,LINES.length-1)];
+
+    w1.textContent=ASK.es; w2.textContent=ASK.en;
+    b1.textContent=L.es;   b2.textContent=L.en;
+
+    at(60,   function(){ stage.classList.add('walking'); });
+    at(1650, function(){ stage.classList.add('asking'); });
+    at(2500, function(){ stage.classList.add('reaching'); react(Math.min(count,4)); });
+    at(3100, function(){ stage.classList.add('sighting'); });
+    at(3700, function(){ stage.classList.add('telling'); });
+    at(4200, function(){ stage.classList.add('grumbling'); patienceEl.textContent=L.p; });
+    at(5600, function(){ w1.textContent=THANKS.es; w2.textContent=THANKS.en; });
+    at(6800, function(){ stage.classList.remove('reaching','sighting','telling','grumbling','asking'); });
+    at(7300, function(){
+      stage.classList.remove('walking');
+      running=false;
+      askBtn.disabled=false;
+      askBtn.textContent = count>=3 ? 'Ask him again anyway' : 'Send someone else over';
+    });
+  }
+
+  askBtn.addEventListener('click',run);
+
+  var bench={grumble:grumble,snort:snort,sigh:sigh,
+             bray1:function(){bray(1);}, bray3:function(){bray(3);},
+             creak:creak};
+  var tinies=document.querySelectorAll('button.tiny');
+  for(var t=0;t<tinies.length;t++){
+    tinies[t].addEventListener('click',function(){
+      primeAudio();
+      var f=bench[this.getAttribute('data-snd')];
+      if(f) f();
+    });
+  }
+})();
+</script>
+</body>
+</html>

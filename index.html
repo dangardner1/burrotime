@@ -277,6 +277,7 @@
 
       <!-- ===== PASSERBY ===== -->
       <g id="walker">
+        <g id="walkerArt">
         <ellipse cx="188" cy="448" rx="46" ry="10" fill="#4E2F1E" opacity=".35"/>
         <path d="M164 372 h50 l20 74 h-90 Z" fill="#3E6B72"/>
         <path d="M144 446 h90" stroke="#2E545A" stroke-width="6"/>
@@ -299,6 +300,7 @@
         <path d="M190 270 q-24 4 -21 32 l-8 4 q-6 -44 29 -42 Z" fill="#7C4B86"/>
         <circle cx="204" cy="298" r="2.8" fill="#2E2119"/>
         <path d="M198 306 q8 4 14 -1" fill="none" stroke="#8A5A44" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
       </g>
 
       <!-- SIGHTLINE -->
@@ -815,9 +817,78 @@
     {es:'Ya ni me molesto.',   en:'I DO NOT EVEN FLINCH ANYMORE.', p:'transcendent'}
   ];
   var THANKS={es:'Gracias, don Aurelio.',en:'THANK YOU — AND SORRY, BURRO.'};
-  var ASK={es:'¿Qué hora es?',en:'EXCUSE ME — DO YOU HAVE THE TIME?'};
   var JOKE={es:'El burro ya debería estar de baja por estrés.',en:'THAT BURRO SHOULD BE ON STRESS LEAVE BY NOW.'};
   var JOKE_CHANCE = 0.3;
+
+  /* ---------- the passerby cast ----------
+     Each visitor re-uses the woman's original body/leg/shadow proportions
+     (same footprint, same standing height) so the walk-in animation never
+     jumps — only the recolored costume/prop details differ per visitor. */
+  var WOMAN_ART =
+    '<ellipse cx="188" cy="448" rx="46" ry="10" fill="#4E2F1E" opacity=".35"/>'+
+    '<path d="M164 372 h50 l20 74 h-90 Z" fill="#3E6B72"/>'+
+    '<path d="M144 446 h90" stroke="#2E545A" stroke-width="6"/>'+
+    '<ellipse cx="170" cy="450" rx="12" ry="6" fill="#33251C"/>'+
+    '<ellipse cx="206" cy="450" rx="12" ry="6" fill="#33251C"/>'+
+    '<path d="M162 316 q26 -10 52 0 l4 58 q-30 10 -60 0 Z" fill="#F0E5D4"/>'+
+    '<path d="M162 316 q26 -10 52 0 l-6 26 q-20 -8 -40 0 Z" fill="#7C4B86"/>'+
+    '<path d="M208 340 q10 30 4 64" fill="none" stroke="#7C4B86" stroke-width="10" stroke-linecap="round"/>'+
+    '<path d="M166 328 q-24 20 -22 46" fill="none" stroke="#F0E5D4" stroke-width="13" stroke-linecap="round"/>'+
+    '<g><path d="M120 372 h48 l-7 34 h-34 Z" fill="#C79A5C"/><path d="M120 372 h48" stroke="#A97C42" stroke-width="5"/>'+
+    '<path d="M128 372 q16 -22 32 0" fill="none" stroke="#A97C42" stroke-width="4"/>'+
+    '<circle cx="134" cy="368" r="7" fill="#B4573F"/><circle cx="148" cy="365" r="8" fill="#7F9455"/><circle cx="160" cy="369" r="6" fill="#D9A03F"/></g>'+
+    '<circle cx="190" cy="298" r="21" fill="#C99A72"/>'+
+    '<path d="M169 296 q0 -26 21 -26 q21 0 21 26 q-8 -12 -21 -12 q-13 0 -21 12 Z" fill="#2E2119"/>'+
+    '<path d="M190 270 q-24 4 -21 32 l-8 4 q-6 -44 29 -42 Z" fill="#7C4B86"/>'+
+    '<circle cx="204" cy="298" r="2.8" fill="#2E2119"/>'+
+    '<path d="M198 306 q8 4 14 -1" fill="none" stroke="#8A5A44" stroke-width="2.5" stroke-linecap="round"/>';
+
+  var KID_ART =
+    '<g transform="translate(190,452) scale(.62) translate(-190,-452)">'+
+    '<ellipse cx="188" cy="448" rx="46" ry="10" fill="#4E2F1E" opacity=".35"/>'+
+    '<path d="M164 372 h50 l20 74 h-90 Z" fill="#4C7A9E"/>'+
+    '<path d="M144 446 h90" stroke="#345A73" stroke-width="6"/>'+
+    '<ellipse cx="170" cy="450" rx="12" ry="6" fill="#33251C"/>'+
+    '<ellipse cx="206" cy="450" rx="12" ry="6" fill="#33251C"/>'+
+    '<path d="M162 316 q26 -10 52 0 l4 58 q-30 10 -60 0 Z" fill="#E4602F"/>'+
+    '<path d="M208 340 q10 30 4 64" fill="none" stroke="#E4602F" stroke-width="10" stroke-linecap="round"/>'+
+    '<path d="M166 328 q-24 20 -22 46" fill="none" stroke="#E4602F" stroke-width="13" stroke-linecap="round"/>'+
+    '<circle cx="190" cy="298" r="21" fill="#D9A97B"/>'+
+    '<path d="M169 288 q0 -20 21 -20 q21 0 21 20 q-4 -6 -21 -6 q-17 0 -21 6 Z" fill="#4A3324"/>'+
+    '<circle cx="204" cy="298" r="2.8" fill="#2E2119"/>'+
+    '<path d="M198 306 q8 6 14 0" fill="none" stroke="#8A5A44" stroke-width="2.5" stroke-linecap="round"/>'+
+    '</g>';
+
+  var TOURIST_ART =
+    '<ellipse cx="188" cy="448" rx="46" ry="10" fill="#4E2F1E" opacity=".35"/>'+
+    '<path d="M164 372 h50 l20 74 h-90 Z" fill="#8A9A7E"/>'+
+    '<path d="M144 446 h90" stroke="#5F6E54" stroke-width="6"/>'+
+    '<ellipse cx="170" cy="450" rx="12" ry="6" fill="#33251C"/>'+
+    '<ellipse cx="206" cy="450" rx="12" ry="6" fill="#33251C"/>'+
+    '<path d="M162 316 q26 -10 52 0 l4 58 q-30 10 -60 0 Z" fill="#E8DCC4"/>'+
+    '<path d="M162 316 q26 -10 52 0 l-6 26 q-20 -8 -40 0 Z" fill="#C0392B"/>'+
+    '<path d="M208 340 q10 30 4 64" fill="none" stroke="#E8DCC4" stroke-width="10" stroke-linecap="round"/>'+
+    '<path d="M166 328 q-14 -18 -6 -40" fill="none" stroke="#E8DCC4" stroke-width="13" stroke-linecap="round"/>'+
+    '<rect x="128" y="268" width="32" height="22" rx="3" fill="#2E2724"/>'+
+    '<circle cx="144" cy="279" r="8" fill="#4A4F57"/><circle cx="144" cy="279" r="4.5" fill="#8FA5B8"/>'+
+    '<rect x="152" y="264" width="7" height="7" fill="#2E2724"/>'+
+    '<circle cx="190" cy="298" r="21" fill="#C99A72"/>'+
+    '<path d="M164 292 q26 -30 52 0 l4 -8 q-30 -26 -60 0 Z" fill="#D8B472"/>'+
+    '<ellipse cx="190" cy="280" rx="38" ry="10" fill="#D8B472"/>'+
+    '<circle cx="204" cy="298" r="2.8" fill="#2E2119"/>'+
+    '<path d="M198 306 q8 4 14 -1" fill="none" stroke="#8A5A44" stroke-width="2.5" stroke-linecap="round"/>';
+
+  var CAST = [
+    { id:'woman',   art:WOMAN_ART,   ask:{es:'¿Qué hora es?',en:'EXCUSE ME — DO YOU HAVE THE TIME?'} },
+    { id:'kid',     art:KID_ART,     ask:{es:'¿Oiga, qué hora es?',en:'HEY MISTER, WHAT TIME IS IT?'} },
+    { id:'tourist', art:TOURIST_ART, ask:{es:'Disculpe, ¿qué hora es?',en:'EXCUSE ME, DO YOU KNOW THE TIME?'} }
+  ];
+  var walkerArt = document.getElementById('walkerArt');
+  var currentVisitor = CAST[0];
+  function pickVisitor(){
+    currentVisitor = CAST[Math.floor(Math.random()*CAST.length)];
+    walkerArt.innerHTML = currentVisitor.art;
+  }
 
   var w1=document.getElementById('walkerLine1'), w2=document.getElementById('walkerLine2');
   var b1=document.getElementById('burroLine1'), b2=document.getElementById('burroLine2');
@@ -855,11 +926,11 @@
   var say1=document.getElementById('sayTime'), say2=document.getElementById('sayPart');
 
   function runRefusal(){
-    w1.textContent=ASK.es; w2.textContent=ASK.en;
+    w1.textContent=currentVisitor.ask.es; w2.textContent=currentVisitor.ask.en;
     b1.textContent='¡Se acabó!'; b2.textContent='THAT DOES IT. I QUIT.';
 
     at(60,   function(){ stage.classList.add('walking'); });
-    at(1650, function(){ stage.classList.add('asking'); speakWoman(ASK.es); });
+    at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
     at(2500, function(){ stage.classList.add('grumbling'); bray(3); });
     at(3600, function(){ stage.classList.remove('grumbling'); stage.classList.add('burroGone'); patienceEl.textContent='se fue (he left)'; });
     at(5400, function(){
@@ -889,6 +960,7 @@
     stage.className='stage';
     count++;
     savePatience();
+    pickVisitor();
 
     if(count>4 && Math.random()<REFUSE_CHANCE){ runRefusal(); return; }
 
@@ -896,11 +968,11 @@
     var tellJoke = Math.random() < JOKE_CHANCE;
     var extra = tellJoke ? 2000 : 0;
 
-    w1.textContent=ASK.es; w2.textContent=ASK.en;
+    w1.textContent=currentVisitor.ask.es; w2.textContent=currentVisitor.ask.en;
     b1.textContent=L.es;   b2.textContent=L.en;
 
     at(60,   function(){ stage.classList.add('walking'); });
-    at(1650, function(){ stage.classList.add('asking'); speakWoman(ASK.es); });
+    at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
     at(2500, function(){ stage.classList.add('reaching'); react(Math.min(count,4)); });
     at(3100, function(){ stage.classList.add('sighting'); stopMusicSoon(6000); });
     at(3700, function(){ stage.classList.add('telling'); speakTime(); });

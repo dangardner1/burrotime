@@ -783,6 +783,8 @@
   ];
   var THANKS={es:'Gracias, don Aurelio.',en:'THANK YOU — AND SORRY, BURRO.'};
   var ASK={es:'¿Qué hora es?',en:'EXCUSE ME — DO YOU HAVE THE TIME?'};
+  var JOKE={es:'El burro ya debería estar de baja por estrés.',en:'THAT BURRO SHOULD BE ON STRESS LEAVE BY NOW.'};
+  var JOKE_CHANCE = 0.3;
 
   var w1=document.getElementById('walkerLine1'), w2=document.getElementById('walkerLine2');
   var b1=document.getElementById('burroLine1'), b2=document.getElementById('burroLine2');
@@ -857,6 +859,8 @@
     if(count>4 && Math.random()<REFUSE_CHANCE){ runRefusal(); return; }
 
     var L=LINES[Math.min(count-1,LINES.length-1)];
+    var tellJoke = Math.random() < JOKE_CHANCE;
+    var extra = tellJoke ? 2000 : 0;
 
     w1.textContent=ASK.es; w2.textContent=ASK.en;
     b1.textContent=L.es;   b2.textContent=L.en;
@@ -867,9 +871,14 @@
     at(3100, function(){ stage.classList.add('sighting'); });
     at(3700, function(){ stage.classList.add('telling'); speakTime(); });
     at(4200, function(){ stage.classList.add('grumbling'); patienceEl.textContent=L.p; });
-    at(5600, function(){ w1.textContent=THANKS.es; w2.textContent=THANKS.en; });
-    at(6800, function(){ stage.classList.remove('reaching','sighting','telling','grumbling','asking'); });
-    at(7300, endScene);
+    if(tellJoke){
+      // an aside about the burro's stress, in Don Aurelio's own bubble —
+      // after the live time reading, before it reverts to the digital clock
+      at(4900, function(){ sayOverride=true; say1.textContent=JOKE.es; say2.textContent=JOKE.en; speakPhrase(JOKE.es); });
+    }
+    at(5600+extra, function(){ w1.textContent=THANKS.es; w2.textContent=THANKS.en; });
+    at(6800+extra, function(){ stage.classList.remove('reaching','sighting','telling','grumbling','asking'); sayOverride=false; });
+    at(7300+extra, endScene);
   }
 
   askBtn.addEventListener('click',run);

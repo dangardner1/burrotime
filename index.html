@@ -45,6 +45,18 @@
     overflow:hidden;background:#2A1B33;box-shadow:0 24px 60px rgba(0,0,0,.55)}
   svg{display:block;width:100%;height:auto}
 
+  /* the timer note's own card — plain HTML instead of fixed-width SVG text,
+     so an arbitrarily long user-typed note always wraps and stays fully
+     visible instead of overflowing the little speech-bubble text element */
+  .noteCard{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+    max-width:min(560px,86%);background:#EFE3D2;border-radius:10px;
+    padding:10px 18px;text-align:center;opacity:0;pointer-events:none;
+    transition:opacity .4s ease;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  .noteCard.show{opacity:1}
+  .noteEs{font-family:Georgia,serif;font-size:18px;color:#2A1B33;overflow-wrap:break-word}
+  .noteEn{font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:1.2px;
+    color:#6B5A47;margin-top:4px;overflow-wrap:break-word}
+
   .readout{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:baseline;justify-content:center;
     margin-top:16px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
   .readout .big{font-size:clamp(26px,6vw,38px);color:var(--brass);font-variant-numeric:tabular-nums;letter-spacing:.04em}
@@ -394,6 +406,10 @@
         </g>
       </g>
     </svg>
+    <div id="noteCard" class="noteCard">
+      <div class="noteEs" id="noteEs"></div>
+      <div class="noteEn" id="noteEn"></div>
+    </div>
   </div>
 
   <div class="readout">
@@ -456,6 +472,9 @@
   var timerSetBtn = document.getElementById('timerSet');
   var timerCancelBtn = document.getElementById('timerCancel');
   var timerCountdownEl = document.getElementById('timerCountdown');
+  var noteCard = document.getElementById('noteCard');
+  var noteEs = document.getElementById('noteEs');
+  var noteEn = document.getElementById('noteEn');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- clock ---------- */
@@ -902,8 +921,11 @@
     var bucket = TIMER_LINES.filter(function(t){ return minutes <= t.max; })[0] || TIMER_LINES[TIMER_LINES.length-1];
     if(note){
       return {
-        es: 'Tu aviso, como pediste: ' + note + '.',
+        es: 'Tu aviso, como pediste: ' + note + '.', // spoken in full — this is Don Aurelio's sentence
         en: 'YOUR REMINDER, AS REQUESTED: ' + note.toUpperCase() + '.',
+        bubbleEs: 'Tu aviso, señor:', // short lead-in that actually fits the fixed-width SVG bubble
+        bubbleEn: 'YOUR REMINDER:',
+        note: note, // the raw text, shown in full in the wrapping #noteCard overlay instead
         level: bucket.level,
         holdMs: 10000 // the user's own note stays fully on screen for a full 10s, not however long the speech happens to take
       };
@@ -1109,6 +1131,7 @@
     askBtn.disabled=false;
     askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Manda a alguien más';
     if(lastReveal) shareRow.classList.add('show');
+    noteCard.classList.remove('show');
   }
 
   /* ---------- shareable daily card ----------
@@ -1250,6 +1273,7 @@
 
     function finishUp(){
       w1.textContent=THANKS.es; w2.textContent=THANKS.en;
+      noteCard.classList.remove('show');
       at(1200, function(){
         stage.classList.remove('reaching','sighting','telling','grumbling','asking','showSign','selfie','flash','flashFade');
         sayOverride=false;
@@ -1261,9 +1285,19 @@
     // starts once the live time reading has actually finished speaking, so
     // it can never cut the time announcement off mid-sentence. A user-set
     // timer substitutes its own themed line here instead of the random JOKE.
+    // A note is spoken in full but shown two ways: a short lead-in in the
+    // fixed-width SVG bubble, and the full text in the wrapping #noteCard
+    // overlay, since arbitrary-length user text can't fit the SVG bubble.
     function tellJokeAfterTime(){
       var line = opts.forcedAside || JOKE;
-      sayOverride=true; say1.textContent=line.es; say2.textContent=line.en;
+      sayOverride=true;
+      say1.textContent = line.note ? line.bubbleEs : line.es;
+      say2.textContent = line.note ? line.bubbleEn : line.en;
+      if(line.note){
+        noteEs.textContent = line.note;
+        noteEn.textContent = line.note.toUpperCase();
+        noteCard.classList.add('show');
+      }
       var shownAt = Date.now();
       speakPhrase(line.es, function(){
         if(!line.holdMs){ finishUp(); return; }

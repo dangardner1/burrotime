@@ -415,20 +415,43 @@
     speechSynthesis.onvoiceschanged = pickSpanishVoice;
   }
   var speaking = false;
+  var speechUnlocked = false;
+  function unlockSpeech(){
+    // Safari/iOS only allow speak() when it's a direct result of a user
+    // gesture — priming it here (inside the click handler) unlocks it for
+    // the later speakTime() call that fires from a setTimeout.
+    if(speechUnlocked || !window.speechSynthesis) return;
+    speechUnlocked = true;
+    try{
+      var warm = new SpeechSynthesisUtterance(' ');
+      warm.volume = 0;
+      speechSynthesis.speak(warm);
+    }catch(e){}
+  }
   function speakTime(){
     if(muted || !window.speechSynthesis) return;
     var d = new Date();
-    try{
-      speechSynthesis.cancel(); // don't stack utterances if asked again quickly
-      var u = new SpeechSynthesisUtterance(spanishTimePhrase(d.getHours(), d.getMinutes()));
-      u.lang = spanishVoice ? spanishVoice.lang : 'es-ES';
-      if(spanishVoice) u.voice = spanishVoice;
-      u.rate = 0.95;
-      u.pitch = 0.95;
-      u.onstart = function(){ speaking = true; };
-      u.onend = u.onerror = function(){ speaking = false; };
-      speechSynthesis.speak(u);
-    }catch(e){}
+    var text = spanishTimePhrase(d.getHours(), d.getMinutes());
+    function doSpeak(){
+      try{
+        var u = new SpeechSynthesisUtterance(text);
+        u.lang = spanishVoice ? spanishVoice.lang : 'es-ES';
+        if(spanishVoice) u.voice = spanishVoice;
+        u.rate = 0.95;
+        u.pitch = 0.95;
+        u.onstart = function(){ speaking = true; };
+        u.onend = u.onerror = function(){ speaking = false; };
+        speechSynthesis.speak(u);
+      }catch(e){}
+    }
+    // Chrome silently drops speak() if it's called in the same tick as a
+    // cancel() — only cancel (and defer) when something is actually queued.
+    if(speechSynthesis.speaking || speechSynthesis.pending){
+      speechSynthesis.cancel();
+      setTimeout(doSpeak, 50);
+    } else {
+      doSpeak();
+    }
   }
   function tick(){
     var d=new Date(), h=d.getHours(), m=d.getMinutes(), s=d.getSeconds();
@@ -619,6 +642,7 @@
 
   function run(){
     if(running) return;
+    unlockSpeech();
     running=true; askBtn.disabled=true;
     clearAll();
     stage.className='stage';

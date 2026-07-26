@@ -492,8 +492,8 @@
     // different-sounding voice, so this no longer fights that battle.
     speakUtterance(text, spanishVoice, 0.855, 1, onEnd);
   }
-  function speakForecast(entry, tempC, onEnd){
-    speakPhrase(composeForecast(entry, tempC).main.es, onEnd);
+  function speakForecast(entry, tempC, real, onEnd){
+    speakPhrase(composeForecast(entry, tempC, real).main.es, onEnd);
   }
   function speakWoman(text){
     // The passerby: most browsers' single default Spanish voice already
@@ -767,65 +767,58 @@
   }
   var GLYPH_CLOUD = '<ellipse cx="-8" cy="2" rx="16" ry="12" fill="#DCE3EA"/><ellipse cx="10" cy="-2" rx="20" ry="15" fill="#EAEFF3"/><ellipse cx="-2" cy="10" rx="24" ry="11" fill="#F4F7F9"/>';
   var WEATHER = [
-    { id:'despejado', desc:{es:'despejado',en:'CLEAR'},
+    { id:'despejado', desc:{es:'despejado',en:'CLEAR'}, tempRange:[16,30],
       sign:{es:'La oreja izquierda no miente.',en:'THE LEFT EAR NEVER LIES.'},
       reactLevel:1, wmo:[0],
       glyph:'<circle r="18" fill="#F2C57C"/>'+sunRays(24,34,'#F2C57C') },
-    { id:'nublado', desc:{es:'nublado',en:'CLOUDY'},
+    { id:'nublado', desc:{es:'nublado',en:'CLOUDY'}, tempRange:[12,22],
       sign:{es:'La cola cuelga recta hoy.',en:'THE TAIL HANGS STRAIGHT TODAY.'},
       reactLevel:1, wmo:[1,2,3],
       glyph:GLYPH_CLOUD },
-    { id:'neblina', desc:{es:'con neblina',en:'FOGGY'},
+    { id:'neblina', desc:{es:'con neblina',en:'FOGGY'}, tempRange:[6,14],
       sign:{es:'Ni el burro ve la torre hoy.',en:'EVEN THE BURRO CAN’T SEE THE TOWER TODAY.'},
       reactLevel:2, wmo:[45,48],
       glyph:'<g stroke="#C9D2D8" stroke-width="5" stroke-linecap="round" opacity=".8">'+
         '<line x1="-26" y1="-10" x2="26" y2="-10"/><line x1="-30" y1="4" x2="30" y2="4"/><line x1="-22" y1="18" x2="22" y2="18"/></g>' },
-    { id:'lluvia', desc:{es:'lluvioso',en:'RAINY'},
+    { id:'lluvia', desc:{es:'lluvioso',en:'RAINY'}, tempRange:[9,18],
       sign:{es:'Las dos orejas caídas — va a llover.',en:'BOTH EARS DOWN — RAIN IS COMING.'},
       reactLevel:2, wmo:[51,53,55,56,57,61,63,65,66,67,80,81,82],
       glyph:GLYPH_CLOUD+'<g stroke="#7CA7D9" stroke-width="3" stroke-linecap="round">'+
         '<line x1="-14" y1="16" x2="-20" y2="32"/><line x1="0" y1="16" x2="-6" y2="32"/><line x1="14" y1="16" x2="8" y2="32"/></g>' },
-    { id:'nieve', desc:{es:'con nieve',en:'SNOWY'},
+    { id:'nieve', desc:{es:'con nieve',en:'SNOWY'}, tempRange:[-6,1],
       sign:{es:'El burro tirita — algo raro pasa.',en:'THE BURRO IS SHIVERING — SOMETHING’S OFF.'},
       reactLevel:3, wmo:[71,73,75,77,85,86],
       glyph:GLYPH_CLOUD+'<g fill="#EAF3FB"><circle cx="-16" cy="22" r="3"/><circle cx="0" cy="28" r="3"/><circle cx="16" cy="22" r="3"/></g>' },
-    { id:'tormenta', desc:{es:'con tormenta',en:'STORMY'},
+    { id:'tormenta', desc:{es:'con tormenta',en:'STORMY'}, tempRange:[14,24],
       sign:{es:'La cola no para quieta — tormenta.',en:'THE TAIL WON’T SIT STILL — A STORM.'},
       reactLevel:3, wmo:[95,96,99],
       glyph:'<ellipse cx="-6" cy="0" rx="22" ry="15" fill="#7A7E8C"/><ellipse cx="10" cy="-4" rx="18" ry="13" fill="#63677A"/>'+
         '<path d="M-2 14 L-12 32 L-2 32 L-10 46 L10 24 L0 24 Z" fill="#E9C46A"/>' },
-    { id:'viento', desc:{es:'ventoso',en:'WINDY'},
+    { id:'viento', desc:{es:'ventoso',en:'WINDY'}, tempRange:[10,20],
       sign:{es:'Una oreja volando de lado — viento fuerte.',en:'ONE EAR BLOWN SIDEWAYS — STRONG WIND.'},
       reactLevel:2, wmo:[],
       glyph:'<g fill="none" stroke="#D8E4EC" stroke-width="4" stroke-linecap="round">'+
         '<path d="M-30 -8 h40 q10 0 10 -8 q0 -8 -9 -8"/><path d="M-30 6 h50 q9 0 9 8 q0 8 -9 8"/><path d="M-30 20 h30"/></g>' },
-    { id:'bochorno', desc:{es:'bochornoso',en:'MUGGY'},
+    { id:'bochorno', desc:{es:'bochornoso',en:'MUGGY'}, tempRange:[32,40],
       sign:{es:'El burro ni se mueve del calor.',en:'THE BURRO WON’T EVEN MOVE, IT’S SO HOT.'},
       reactLevel:4, wmo:[],
       glyph:'<circle r="16" fill="#E08B3E"/>'+sunRays(20,28,'#E08B3E')+
         '<g stroke="#F2C57C" stroke-width="2.5" stroke-linecap="round" opacity=".7"><path d="M-20 30 q6 -8 0 -16 q-6 -8 0 -16"/><path d="M20 30 q6 -8 0 -16 q-6 -8 0 -16"/></g>' },
-    { id:'burro', desc:{es:'de burro',en:'IMPOSSIBLE TO SAY'},
+    { id:'burro', desc:{es:'de burro',en:'IMPOSSIBLE TO SAY'}, tempRange:[10,28],
       sign:{es:'El burro se encoge de hombros. Bueno, orejas.',en:'THE BURRO SHRUGS. WELL, EARS.'},
       reactLevel:1, wmo:[], fallbackOnly:true,
       glyph:'<circle r="26" fill="none" stroke="#E9C46A" stroke-width="4"/><text x="0" y="10" text-anchor="middle" font-family="Georgia,serif" font-size="34" fill="#E9C46A">?</text>' }
   ];
   var WEATHER_REAL = WEATHER.filter(function(w){ return !w.fallbackOnly; });
 
-  // Kept short (the bubble is a fixed width) — the temperature does the
-  // talking in the real-weather case, and the fallback just names the
-  // guess plainly, with the honesty about it pushed into the small EN
-  // subtitle rather than crowding the main Spanish line.
-  function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
-  function composeForecast(entry, tempC){
-    if(tempC != null){
-      return {
-        main:{ es:Math.round(tempC)+'°, '+entry.desc.es+'.',
-               en:Math.round(tempC)+'°C, '+entry.desc.en+'.' },
-        sign: entry.sign
-      };
-    }
+  // Every forecast — real or invented — now carries a temperature, so the
+  // spoken/written line is always "N grados, <condition>."; the honesty
+  // about a guessed forecast is pushed into the small EN subtitle rather
+  // than crowding the main Spanish line.
+  function composeForecast(entry, tempC, real){
     return {
-      main:{ es:cap(entry.desc.es)+'.', en:entry.desc.en+' (GUESS)' },
+      main:{ es:Math.round(tempC)+' grados, '+entry.desc.es+'.',
+             en:Math.round(tempC)+'°C, '+entry.desc.en+(real?'':' (GUESS)') },
       sign: entry.sign
     };
   }
@@ -855,19 +848,26 @@
     if(code === 0) return WEATHER_REAL.filter(function(w){return w.id==='despejado';})[0];
     return WEATHER_REAL.filter(function(w){return w.id==='nublado';})[0];
   }
-  // mulberry32 over a YYYY-MM-DD string: same invented forecast for
-  // everyone all day, independent of Math.random() (which still drives
-  // per-visit gags like the cast pick and the aside).
-  function dailySeed(){
+  // mulberry32 over a YYYY-MM-DD string (+ a per-call tag, so the entry
+  // pick and the invented temperature don't collide on the same value):
+  // same invented forecast for everyone all day, independent of
+  // Math.random() (which still drives per-visit gags like the cast pick
+  // and the aside).
+  function dailyRandom(tag){
     var d = new Date();
-    var key = d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    var key = tag+'|'+d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
     var h = 0;
     for(var i=0;i<key.length;i++){ h = (h*31 + key.charCodeAt(i)) >>> 0; }
     h |= 0; h = h + 0x6D2B79F5 | 0;
     var t = Math.imul(h ^ h >>> 15, 1 | h);
     t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    var r = ((t ^ t >>> 14) >>> 0) / 4294967296;
-    return WEATHER[Math.floor(r * WEATHER.length)];
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+  function dailySeed(){
+    var entry = WEATHER[Math.floor(dailyRandom('entry') * WEATHER.length)];
+    var range = entry.tempRange;
+    var tempC = range[0] + dailyRandom('temp') * (range[1]-range[0]);
+    return { entry:entry, tempC:tempC };
   }
 
   function fetchRealForecast(){
@@ -907,7 +907,8 @@
       if(raw) return { entry:pickRealEntry(raw), tempC:raw.temp, real:true };
       var cached = cachedRealForecast();
       if(cached) return { entry:pickRealEntry(cached), tempC:cached.temp, real:true };
-      return { entry:dailySeed(), tempC:null, real:false };
+      var seeded = dailySeed();
+      return { entry:seeded.entry, tempC:seeded.tempC, real:false };
     });
   }
 
@@ -1097,7 +1098,7 @@
     // never rushes the pacing.
     var t0 = Date.now();
     getForecast().then(function(result){
-      var entry = result.entry, tempC = result.tempC;
+      var entry = result.entry, tempC = result.tempC, real = result.real;
       var d = Math.max(0, 2500 - (Date.now() - t0));
 
       at(d, function(){
@@ -1112,9 +1113,9 @@
       at(d+600, function(){ stage.classList.add('sighting'); stopMusicSoon(6000); });
       at(d+1200, function(){
         stage.classList.add('telling');
-        var f = composeForecast(entry, tempC);
+        var f = composeForecast(entry, tempC, real);
         say1.textContent = f.main.es; say2.textContent = f.main.en;
-        speakForecast(entry, tempC, tellAside ? tellAsideAfterForecast(entry) : undefined);
+        speakForecast(entry, tempC, real, tellAside ? tellAsideAfterForecast(entry) : undefined);
       });
       at(d+1700, function(){
         stage.classList.add('grumbling'); patienceEl.textContent=L.p;

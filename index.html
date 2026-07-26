@@ -4,6 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>El Reloj — the village timekeeper</title>
+<meta name="description" content="Don Aurelio has told this village the time for forty-one years. He has never owned a watch. He has, however, always owned a burro — and the burro has opinions.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2A1B33">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="El Reloj — the village timekeeper">
+<meta property="og:description" content="Don Aurelio has told this village the time for forty-one years. He has never owned a watch. He has, however, always owned a burro — and the burro has opinions.">
+<meta property="og:url" content="https://burrotime.vercel.app/">
+<meta property="og:image" content="https://burrotime.vercel.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="631">
+<meta name="twitter:card" content="summary_large_image">
 <style>
   :root{
     --plum-deep:#2A1B33;
@@ -73,7 +86,8 @@
   #tail{transition:transform .5s cubic-bezier(.34,1.6,.5,1);transform-origin:548px 208px}
   #earNear{transform-origin:322px 118px}
   #earFar{transform-origin:345px 126px}
-  #burroRig{transform-origin:430px 320px}
+  #burroRig{transform-origin:430px 320px;transition:transform 2.2s cubic-bezier(.55,0,.75,.6)}
+  .burroGone #burroRig{transform:translateX(-640px)}
   #beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker{opacity:0;transition:opacity .4s ease}
   #magnifier{transform-origin:790px 106px;transform:scale(.6);
     transition:opacity .4s ease,transform .5s cubic-bezier(.34,1.5,.5,1)}
@@ -95,7 +109,7 @@
   @keyframes march{to{stroke-dashoffset:-32}}
 
   @media (prefers-reduced-motion:reduce){
-    #walker,#pouch,#arm,#torso,#tail,#beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#burroEye
+    #walker,#pouch,#arm,#torso,#tail,#beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#burroEye,#burroRig
       {transition-duration:.01ms}
     #beamCore{animation:none}
   }
@@ -134,8 +148,24 @@
 
       <!-- SKY -->
       <rect x="0" y="0" width="900" height="352" fill="url(#sky)"/>
-      <circle cx="180" cy="268" r="120" fill="url(#sunGlow)"/>
-      <circle cx="180" cy="272" r="46" fill="#FFE2AE" opacity=".9"/>
+      <g id="sunGroup">
+        <circle cx="180" cy="268" r="120" fill="url(#sunGlow)"/>
+        <circle cx="180" cy="272" r="46" fill="#FFE2AE" opacity=".9"/>
+      </g>
+      <g id="nightGroup" style="display:none">
+        <circle cx="112" cy="92" r="36" fill="#EFE3D2" opacity=".92"/>
+        <circle cx="128" cy="82" r="31" fill="#1E1840"/>
+        <circle cx="96" cy="70" r="1.8" fill="#EFE3D2" opacity=".8"/>
+        <circle cx="150" cy="180" r="1.4" fill="#EFE3D2" opacity=".6"/>
+        <circle cx="340" cy="52" r="1.6" fill="#EFE3D2" opacity=".75"/>
+        <circle cx="452" cy="120" r="1.3" fill="#EFE3D2" opacity=".55"/>
+        <circle cx="548" cy="66" r="1.8" fill="#EFE3D2" opacity=".8"/>
+        <circle cx="660" cy="150" r="1.4" fill="#EFE3D2" opacity=".6"/>
+        <circle cx="762" cy="60" r="1.6" fill="#EFE3D2" opacity=".7"/>
+        <circle cx="836" cy="196" r="1.3" fill="#EFE3D2" opacity=".55"/>
+        <circle cx="420" cy="210" r="1.2" fill="#EFE3D2" opacity=".45"/>
+        <circle cx="705" cy="95" r="1.2" fill="#EFE3D2" opacity=".5"/>
+      </g>
       <path d="M300 118 q9-7 17 0 q8-7 17 0" fill="none" stroke="#3B2540" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>
       <path d="M356 96 q7-6 13 0 q6-6 13 0" fill="none" stroke="#3B2540" stroke-width="2.2" stroke-linecap="round" opacity=".35"/>
 
@@ -446,10 +476,8 @@
       speechSynthesis.speak(warm);
     }catch(e){}
   }
-  function speakTime(){
+  function speakPhrase(text){
     if(muted || !window.speechSynthesis) return;
-    var d = new Date();
-    var text = spanishTimePhrase(d.getHours(), d.getMinutes());
     function doSpeak(){
       try{
         var u = new SpeechSynthesisUtterance(text);
@@ -474,6 +502,45 @@
       doSpeak();
     }
   }
+  function speakTime(){
+    var d = new Date();
+    speakPhrase(spanishTimePhrase(d.getHours(), d.getMinutes()));
+  }
+  /* ---------- time-of-day scenery ----------
+     The clock knows the real hour, so the plaza should too: night gets a
+     moon and stars, dawn and day get their own light, dusk is the classic. */
+  var SCENES = {
+    night:{sky:['#141031','#1E1840','#2A2154','#3A2C66'], sun:null},
+    dawn: {sky:['#3A2F5C','#96566B','#E89B6B','#F7D9A0'], sun:{cx:220,cy:300}},
+    day:  {sky:['#6E97C8','#8FB2D8','#DCC9A2','#F2E0B8'], sun:{cx:450,cy:110}},
+    dusk: {sky:['#4A2F52','#8E5063','#D9834F','#F2C57C'], sun:{cx:180,cy:270}}
+  };
+  function periodOf(h){
+    if(h<6||h>=21) return 'night';
+    if(h<9)  return 'dawn';
+    if(h<17) return 'day';
+    return 'dusk';
+  }
+  var lastPeriod = null;
+  function applyScenery(h){
+    var p = periodOf(h);
+    if(p === lastPeriod) return;
+    lastPeriod = p;
+    var s = SCENES[p];
+    var stops = document.querySelectorAll('#sky stop');
+    for(var i=0;i<stops.length && i<s.sky.length;i++) stops[i].setAttribute('stop-color', s.sky[i]);
+    var sunG = document.getElementById('sunGroup'), nightG = document.getElementById('nightGroup');
+    if(s.sun){
+      sunG.style.display = '';
+      sunG.setAttribute('transform','translate('+(s.sun.cx-180)+','+(s.sun.cy-270)+')');
+      nightG.style.display = 'none';
+    } else {
+      sunG.style.display = 'none';
+      nightG.style.display = '';
+    }
+  }
+
+  var sayOverride = false; // the refusal scene borrows Don Aurelio's bubble
   function tick(){
     var d=new Date(), h=d.getHours(), m=d.getMinutes(), s=d.getSeconds();
     var hDeg=(h%12)*30+m*0.5+s*(0.5/60), mDeg=m*6+s*0.1, sDeg=s*6;
@@ -483,9 +550,12 @@
     hand(document.getElementById('bigMin'),790,106,44,mDeg);
     hand(document.getElementById('bigSec'),790,106,48,sDeg);
     var h12=h%12; if(h12===0) h12=12;
-    document.getElementById('sayTime').textContent=(h12===1?'Es la ':'Son las ')+h12+':'+pad(m);
-    document.getElementById('sayPart').textContent=partOfDay(h);
+    if(!sayOverride){
+      document.getElementById('sayTime').textContent=(h12===1?'Es la ':'Son las ')+h12+':'+pad(m);
+      document.getElementById('sayPart').textContent=partOfDay(h);
+    }
     document.getElementById('digital').textContent=pad(h)+':'+pad(m)+':'+pad(s);
+    applyScenery(h);
   }
   try{ document.getElementById('zone').textContent=Intl.DateTimeFormat().resolvedOptions().timeZone||''; }catch(e){}
   tick(); setInterval(tick,1000);
@@ -658,8 +728,60 @@
   var b1=document.getElementById('burroLine1'), b2=document.getElementById('burroLine2');
   var count=0, running=false, timers=[];
 
+  /* ---------- the burro remembers ----------
+     Patience persists across visits: six quiet hours and all is forgiven. */
+  var PATIENCE_KEY = 'burro-patience';
+  var FORGIVE_MS = 6*60*60*1000;
+  try{
+    var saved = JSON.parse(localStorage.getItem(PATIENCE_KEY)||'null');
+    if(saved && (Date.now()-saved.ts) < FORGIVE_MS) count = saved.count|0;
+  }catch(e){}
+  function savePatience(){
+    try{ localStorage.setItem(PATIENCE_KEY, JSON.stringify({count:count, ts:Date.now()})); }catch(e){}
+  }
+  if(count>0){
+    patienceEl.textContent = LINES[Math.min(count-1,LINES.length-1)].p;
+    askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Send someone else over';
+  }
+
   function at(ms,fn){ timers.push(setTimeout(fn, reduce?Math.min(ms,80):ms)); }
   function clearAll(){ for(var i=0;i<timers.length;i++) clearTimeout(timers[i]); timers=[]; }
+
+  function endScene(){
+    stage.classList.remove('walking');
+    running=false;
+    askBtn.disabled=false;
+    askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Send someone else over';
+  }
+
+  /* Once patience is transcendent, sometimes the burro simply leaves —
+     and the pouch (with the sighting-glass) leaves with him. */
+  var REFUSE_CHANCE = 0.25;
+  var say1=document.getElementById('sayTime'), say2=document.getElementById('sayPart');
+
+  function runRefusal(){
+    w1.textContent=ASK.es; w2.textContent=ASK.en;
+    b1.textContent='¡Se acabó!'; b2.textContent='THAT DOES IT. I QUIT.';
+
+    at(60,   function(){ stage.classList.add('walking'); });
+    at(1650, function(){ stage.classList.add('asking'); });
+    at(2500, function(){ stage.classList.add('grumbling'); bray(3); });
+    at(3600, function(){ stage.classList.remove('grumbling'); stage.classList.add('burroGone'); patienceEl.textContent='se fue (he left)'; });
+    at(5400, function(){
+      sayOverride=true;
+      say1.textContent='No sé…';
+      say2.textContent='SE LLEVÓ EL RELOJ — HE TOOK THE CLOCK';
+      stage.classList.add('telling');
+      speakPhrase('No sé. Se llevó el reloj.');
+    });
+    at(7200, function(){ w1.textContent='Vaya.'; w2.textContent='OH. OKAY THEN.'; });
+    at(8400, function(){
+      stage.classList.remove('telling','asking');
+      sayOverride=false;
+      stage.classList.remove('burroGone'); // he comes back — he lives here
+    });
+    at(10600, endScene);
+  }
 
   function run(){
     if(running) return;
@@ -669,6 +791,10 @@
     clearAll();
     stage.className='stage';
     count++;
+    savePatience();
+
+    if(count>4 && Math.random()<REFUSE_CHANCE){ runRefusal(); return; }
+
     var L=LINES[Math.min(count-1,LINES.length-1)];
 
     w1.textContent=ASK.es; w2.textContent=ASK.en;
@@ -682,12 +808,7 @@
     at(4200, function(){ stage.classList.add('grumbling'); patienceEl.textContent=L.p; });
     at(5600, function(){ w1.textContent=THANKS.es; w2.textContent=THANKS.en; });
     at(6800, function(){ stage.classList.remove('reaching','sighting','telling','grumbling','asking'); });
-    at(7300, function(){
-      stage.classList.remove('walking');
-      running=false;
-      askBtn.disabled=false;
-      askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Send someone else over';
-    });
+    at(7300, endScene);
   }
 
   askBtn.addEventListener('click',run);

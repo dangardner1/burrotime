@@ -72,6 +72,17 @@
     transition:opacity .4s ease}
   .shareRow.show{opacity:1;max-height:60px}
 
+  .timerRow{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+    align-items:center;font-size:13px}
+  .timerRow label{opacity:.7}
+  .timerRow input{width:56px;font-family:ui-monospace,Menlo,monospace;font-size:13px;
+    padding:6px 8px;border-radius:2px;border:1px solid rgba(233,196,106,.45);
+    background:transparent;color:var(--paper);text-align:center}
+  .timerRow input[type=text]{width:140px;text-align:left}
+  .timerRow input::-webkit-outer-spin-button,.timerRow input::-webkit-inner-spin-button{opacity:.6}
+  #timerCountdown{min-width:3.5em;display:inline-block;font-family:ui-monospace,Menlo,monospace;
+    color:var(--brass)}
+
   .bench{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:14px}
   .benchlbl{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.2em;
     text-transform:uppercase;opacity:.45;width:100%;text-align:center}
@@ -404,6 +415,16 @@
     <button id="shareBtn" class="ghost tiny">Compartir el burro de hoy →</button>
   </div>
 
+  <div class="timerRow">
+    <label for="timerMinutes">Avísame en</label>
+    <input type="number" id="timerMinutes" min="1" max="180" value="20"> min
+    <label for="timerNote">¿para qué?</label>
+    <input type="text" id="timerNote" maxlength="60" placeholder="el té (opcional)">
+    <button id="timerSet" class="ghost tiny">Poner aviso</button>
+    <button id="timerCancel" class="ghost tiny" hidden>Cancelar</button>
+    <span id="timerCountdown"></span>
+  </div>
+
   <div class="bench">
     <span class="benchlbl">Audition a reaction</span>
     <button class="tiny" data-snd="grumble">gruñido</button>
@@ -430,6 +451,11 @@
   var streakEl = document.getElementById('streak');
   var shareRow = document.getElementById('shareRow');
   var shareBtn = document.getElementById('shareBtn');
+  var timerMinutesInput = document.getElementById('timerMinutes');
+  var timerNoteInput = document.getElementById('timerNote');
+  var timerSetBtn = document.getElementById('timerSet');
+  var timerCancelBtn = document.getElementById('timerCancel');
+  var timerCountdownEl = document.getElementById('timerCountdown');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- clock ---------- */
@@ -861,6 +887,29 @@
   var JOKE={es:'El burro ya debería estar de baja por estrés.',en:'THAT BURRO SHOULD BE ON STRESS LEAVE BY NOW.'};
   var JOKE_CHANCE = 0.3;
 
+  // the burro's aside when a user-set timer wakes him, themed to how long
+  // he was left waiting — used instead of the random JOKE for that scene
+  var TIMER_LINES = [
+    { max:10,       es:'Qué rápido. Apenas me acomodé.',     en:'THAT WAS FAST. I BARELY SAT DOWN.',       level:1 },
+    { max:30,       es:'Bueno, ya era hora.',                 en:'WELL, ABOUT TIME.',                       level:2 },
+    { max:60,       es:'Me dejaste ahí parado un buen rato.',  en:'YOU LEFT ME STANDING THERE FOR A WHILE.', level:3 },
+    { max:Infinity, es:'¿En serio? ¿Todo ese tiempo?',        en:'SERIOUSLY? ALL THAT TIME?',               level:4 }
+  ];
+  // when the user gave a reason for the reminder, the burro reads that back
+  // instead of just commenting on the wait — but the wait still sets how
+  // annoyed he looks (react level) via the matching TIMER_LINES bucket
+  function timerLineFor(minutes, note){
+    var bucket = TIMER_LINES.filter(function(t){ return minutes <= t.max; })[0] || TIMER_LINES[TIMER_LINES.length-1];
+    if(note){
+      return {
+        es: 'Tu aviso, como pediste: ' + note + '.',
+        en: 'YOUR REMINDER, AS REQUESTED: ' + note.toUpperCase() + '.',
+        level: bucket.level
+      };
+    }
+    return bucket;
+  }
+
   /* ---------- the passerby cast ----------
      Each visitor re-uses the woman's original body/leg/shadow proportions
      (same footprint, same standing height) so the walk-in animation never
@@ -979,6 +1028,76 @@
     }catch(e){ streak = streak || 1; }
     streakEl.textContent = streakLabel(streak);
   }
+
+  /* ---------- a timer you set yourself ----------
+     "Avísame en N minutos" — when it elapses, the burro's own walk-on/
+     reveal scene fires unprompted, with an aside themed to how long the
+     wait was (see TIMER_LINES, below run()). Persisted in localStorage so
+     a reload resumes the countdown instead of losing it. */
+  var TIMER_KEY = 'burro-timer';
+  var timerHandle = null, timerEndAt = null, timerMinutes = null, timerNote = '';
+  function saveTimer(){
+    try{
+      if(timerEndAt) localStorage.setItem(TIMER_KEY, JSON.stringify({endAt:timerEndAt, minutes:timerMinutes, note:timerNote}));
+      else localStorage.removeItem(TIMER_KEY);
+    }catch(e){}
+  }
+  function startTimer(minutes, note){
+    timerMinutes = minutes;
+    timerNote = note || '';
+    timerEndAt = Date.now() + minutes*60000;
+    saveTimer();
+    timerSetBtn.hidden = true; timerCancelBtn.hidden = false;
+    tickTimer();
+    timerHandle = setInterval(tickTimer, 500);
+  }
+  function cancelTimer(){
+    if(timerHandle) clearInterval(timerHandle);
+    timerHandle = null; timerEndAt = null; timerMinutes = null; timerNote = '';
+    saveTimer();
+    timerCountdownEl.textContent = '';
+    timerSetBtn.hidden = false; timerCancelBtn.hidden = true;
+    document.title = 'El Reloj';
+  }
+  function tickTimer(){
+    var remaining = timerEndAt - Date.now();
+    if(remaining <= 0){
+      clearInterval(timerHandle); timerHandle = null;
+      var minutes = timerMinutes, note = timerNote;
+      timerEndAt = null; timerMinutes = null; timerNote = ''; saveTimer();
+      timerSetBtn.hidden = false; timerCancelBtn.hidden = true;
+      timerCountdownEl.textContent = '';
+      document.title = 'El Reloj';
+      runTimerReveal(minutes, note);
+      return;
+    }
+    var m = Math.floor(remaining/60000), s = Math.floor((remaining%60000)/1000);
+    var label = m+':'+(s<10?'0':'')+s;
+    timerCountdownEl.textContent = label;
+    document.title = '('+label+') El Reloj';
+  }
+  timerSetBtn.addEventListener('click', function(){
+    var v = Math.max(1, Math.min(180, parseInt(timerMinutesInput.value,10)||20));
+    startTimer(v, timerNoteInput.value.trim());
+  });
+  timerCancelBtn.addEventListener('click', cancelTimer);
+  // resume an in-progress timer, or catch up immediately if the deadline
+  // already passed while the tab was closed (speech may be blocked by the
+  // browser's autoplay-gesture policy in that case, but the scene still plays)
+  try{
+    var savedTimer = JSON.parse(localStorage.getItem(TIMER_KEY)||'null');
+    if(savedTimer && savedTimer.endAt){
+      if(savedTimer.endAt <= Date.now()){
+        localStorage.removeItem(TIMER_KEY);
+        setTimeout(function(){ runTimerReveal(savedTimer.minutes, savedTimer.note); }, 400);
+      } else {
+        timerMinutes = savedTimer.minutes; timerEndAt = savedTimer.endAt; timerNote = savedTimer.note||'';
+        timerSetBtn.hidden = true; timerCancelBtn.hidden = false;
+        tickTimer();
+        timerHandle = setInterval(tickTimer, 500);
+      }
+    }
+  }catch(e){}
 
   function at(ms,fn){ timers.push(setTimeout(fn, reduce?Math.min(ms,80):ms)); }
   function clearAll(){ for(var i=0;i<timers.length;i++) clearTimeout(timers[i]); timers=[]; }
@@ -1103,7 +1222,8 @@
     at(10600, endScene);
   }
 
-  function run(){
+  function run(opts){
+    opts = opts || {};
     if(running) return;
     wakeUp();
     unlockSpeech();
@@ -1120,7 +1240,7 @@
     if(count>4 && Math.random()<REFUSE_CHANCE){ runRefusal(); return; }
 
     var L=LINES[Math.min(count-1,LINES.length-1)];
-    var tellJoke = Math.random() < JOKE_CHANCE;
+    var tellJoke = opts.forcedAside ? true : Math.random() < JOKE_CHANCE;
     var selfie = currentVisitor.id==='tourist' && Math.random() < SELFIE_CHANCE;
     var showSign = L.p==='transcendent' && !selfie && Math.random() < SIGN_CHANCE;
 
@@ -1138,15 +1258,17 @@
 
     // an aside about the burro's stress, in Don Aurelio's own bubble — only
     // starts once the live time reading has actually finished speaking, so
-    // it can never cut the time announcement off mid-sentence
+    // it can never cut the time announcement off mid-sentence. A user-set
+    // timer substitutes its own themed line here instead of the random JOKE.
     function tellJokeAfterTime(){
-      sayOverride=true; say1.textContent=JOKE.es; say2.textContent=JOKE.en;
-      speakPhrase(JOKE.es, finishUp);
+      var line = opts.forcedAside || JOKE;
+      sayOverride=true; say1.textContent=line.es; say2.textContent=line.en;
+      speakPhrase(line.es, finishUp);
     }
 
     at(60,   function(){ stage.classList.add('walking'); });
     at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
-    at(2500, function(){ stage.classList.add('reaching'); react(Math.min(count,4)); });
+    at(2500, function(){ stage.classList.add('reaching'); react(opts.forcedAside ? opts.forcedAside.level : Math.min(count,4)); });
     if(selfie){
       at(SELFIE_AT,     function(){ stage.classList.add('selfie','flash'); react(1); });
       at(SELFIE_AT+120, function(){ stage.classList.remove('flash'); stage.classList.add('flashFade'); });
@@ -1171,7 +1293,13 @@
     }
   }
 
-  askBtn.addEventListener('click',run);
+  askBtn.addEventListener('click', function(){ run(); });
+
+  // fired by the user-set timer instead of a click — same scene, themed aside
+  function runTimerReveal(minutes, note){
+    if(running){ setTimeout(function(){ runTimerReveal(minutes, note); }, 2000); return; }
+    run({ forcedAside: timerLineFor(minutes, note) });
+  }
 
   /* ---------- idle dozing ----------
      If nobody's asked in a while, the burro's eyes droop and he daydreams. */

@@ -347,21 +347,21 @@
   </div>
 
   <div class="controls">
-    <button id="ask">Send someone over to ask</button>
-    <button id="sound" class="ghost" aria-pressed="true">Sound on</button>
-    <button id="music" class="ghost" aria-pressed="true">Music on</button>
+    <button id="ask">Manda a alguien a preguntar</button>
+    <button id="sound" class="ghost" aria-pressed="true">Con sonido</button>
+    <button id="music" class="ghost" aria-pressed="true">Con música</button>
   </div>
 
   <div class="patience">Burro's patience today: <b id="patience">intact</b></div>
 
   <div class="bench">
     <span class="benchlbl">Audition a reaction</span>
-    <button class="tiny" data-snd="grumble">grumble</button>
-    <button class="tiny" data-snd="snort">snort</button>
-    <button class="tiny" data-snd="bray1">single bray</button>
-    <button class="tiny" data-snd="bray3">full bray</button>
-    <button class="tiny" data-snd="creak">creak tail only</button>
-    <button class="tiny" data-snd="sigh">sigh</button>
+    <button class="tiny" data-snd="grumble">gruñido</button>
+    <button class="tiny" data-snd="snort">resoplido</button>
+    <button class="tiny" data-snd="bray1">rebuzno sencillo</button>
+    <button class="tiny" data-snd="bray3">rebuzno completo</button>
+    <button class="tiny" data-snd="creak">solo la cola</button>
+    <button class="tiny" data-snd="sigh">suspiro</button>
   </div>
 
   <p class="soundnote" id="soundnote">A recording didn't load — the burro is performing in mime today.</p>
@@ -636,7 +636,7 @@
 
   sndBtn.addEventListener('click',function(){
     muted=!muted;
-    sndBtn.textContent = muted ? 'Sound off' : 'Sound on';
+    sndBtn.textContent = muted ? 'Sin sonido' : 'Con sonido';
     sndBtn.setAttribute('aria-pressed', String(!muted));
     if(!muted) primeAudio();
   });
@@ -690,7 +690,7 @@
 
   musicBtn.addEventListener('click',function(){
     musicMuted = !musicMuted;
-    musicBtn.textContent = musicMuted ? 'Music off' : 'Music on';
+    musicBtn.textContent = musicMuted ? 'Sin música' : 'Con música';
     musicBtn.setAttribute('aria-pressed', String(!musicMuted));
     if(!musicMuted) playMusic();
   });
@@ -755,7 +755,7 @@
   }
   if(count>0){
     patienceEl.textContent = LINES[Math.min(count-1,LINES.length-1)].p;
-    askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Send someone else over';
+    askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Manda a alguien más';
   }
 
   function at(ms,fn){ timers.push(setTimeout(fn, reduce?Math.min(ms,80):ms)); }
@@ -765,7 +765,7 @@
     stage.classList.remove('walking');
     running=false;
     askBtn.disabled=false;
-    askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Send someone else over';
+    askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Manda a alguien más';
   }
 
   /* Once patience is transcendent, sometimes the burro simply leaves —

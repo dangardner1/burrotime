@@ -529,7 +529,13 @@
     }catch(e){}
   }
   function speakUtterance(text, voice, rate, pitch, onEnd){
-    if(muted || isBraveBrowser || !window.speechSynthesis) return;
+    // Even when speech can't actually play (muted, Brave, unsupported), any
+    // caller chaining work off onEnd must still get to run — otherwise a
+    // scene that waits on speech completion would hang forever.
+    if(muted || isBraveBrowser || !window.speechSynthesis){
+      if(onEnd) setTimeout(onEnd, 0);
+      return;
+    }
     function doSpeak(){
       try{
         var u = new SpeechSynthesisUtterance(text);
@@ -539,9 +545,9 @@
         u.pitch = pitch;
         u.onstart = function(){ speaking = true; };
         u.onend = function(){ speaking = false; if(onEnd) onEnd(); };
-        u.onerror = function(){ speaking = false; };
+        u.onerror = function(){ speaking = false; if(onEnd) onEnd(); };
         speechSynthesis.speak(u);
-      }catch(e){}
+      }catch(e){ if(onEnd) onEnd(); }
     }
     // Chrome silently drops speak() if it's called in the same tick as a
     // cancel() — only cancel (and defer) when something is actually queued.
@@ -560,9 +566,9 @@
     // different-sounding voice, so this no longer fights that battle.
     speakUtterance(text, spanishVoice, 0.95, 1, onEnd);
   }
-  function speakTime(){
+  function speakTime(onEnd){
     var d = new Date();
-    speakPhrase(spanishTimePhrase(d.getHours(), d.getMinutes()));
+    speakPhrase(spanishTimePhrase(d.getHours(), d.getMinutes()), onEnd);
   }
   function speakWoman(text){
     // The passerby: most browsers' single default Spanish voice already
@@ -989,10 +995,26 @@
     var tellJoke = Math.random() < JOKE_CHANCE;
     var selfie = currentVisitor.id==='tourist' && Math.random() < SELFIE_CHANCE;
     var showSign = L.p==='transcendent' && !selfie && Math.random() < SIGN_CHANCE;
-    var extra = tellJoke ? 2000 : 0;
 
     w1.textContent=currentVisitor.ask.es; w2.textContent=currentVisitor.ask.en;
     b1.textContent=L.es;   b2.textContent=L.en;
+
+    function finishUp(){
+      w1.textContent=THANKS.es; w2.textContent=THANKS.en;
+      at(1200, function(){
+        stage.classList.remove('reaching','sighting','telling','grumbling','asking','showSign','selfie','flash','flashFade');
+        sayOverride=false;
+      });
+      at(1700, endScene);
+    }
+
+    // an aside about the burro's stress, in Don Aurelio's own bubble — only
+    // starts once the live time reading has actually finished speaking, so
+    // it can never cut the time announcement off mid-sentence
+    function tellJokeAfterTime(){
+      sayOverride=true; say1.textContent=JOKE.es; say2.textContent=JOKE.en;
+      speakPhrase(JOKE.es, finishUp);
+    }
 
     at(60,   function(){ stage.classList.add('walking'); });
     at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
@@ -1002,19 +1024,17 @@
       at(SELFIE_AT+120, function(){ stage.classList.remove('flash'); stage.classList.add('flashFade'); });
     }
     at(3100, function(){ stage.classList.add('sighting'); stopMusicSoon(6000); });
-    at(3700, function(){ stage.classList.add('telling'); speakTime(); });
+    at(3700, function(){
+      stage.classList.add('telling');
+      speakTime(tellJoke ? tellJokeAfterTime : undefined);
+    });
     at(4200, function(){
       stage.classList.add('grumbling'); patienceEl.textContent=L.p;
       if(showSign) stage.classList.add('showSign');
     });
-    if(tellJoke){
-      // an aside about the burro's stress, in Don Aurelio's own bubble —
-      // after the live time reading, before it reverts to the digital clock
-      at(4900, function(){ sayOverride=true; say1.textContent=JOKE.es; say2.textContent=JOKE.en; speakPhrase(JOKE.es); });
+    if(!tellJoke){
+      at(5600, finishUp);
     }
-    at(5600+extra, function(){ w1.textContent=THANKS.es; w2.textContent=THANKS.en; });
-    at(6800+extra, function(){ stage.classList.remove('reaching','sighting','telling','grumbling','asking','showSign','selfie','flash','flashFade'); sayOverride=false; });
-    at(7300+extra, endScene);
   }
 
   askBtn.addEventListener('click',run);

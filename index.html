@@ -333,18 +333,12 @@
     <button class="tiny" data-snd="sigh">sigh</button>
   </div>
 
-  <p class="soundnote" id="soundnote">Recording didn't load — the burro is performing in mime today. Sound will resume once a reachable audio source is configured.</p>
+  <p class="soundnote" id="soundnote">A recording didn't load — the burro is performing in mime today.</p>
 
   <footer>
-    The tower clock shows your device's local time. Every bray, snort, grumble and sigh here is drawn from a real
-    field recording of a donkey (not synthesized), reshaped with speed, trim and volume for each reaction — source
-    credited below. Ask repeatedly at your own risk.
-    <br><br>
-    Recording: <a href="https://commons.wikimedia.org/wiki/Special:FilePath/Donkey%20Braying.ogg" target="_blank" rel="noopener">Wikimedia Commons — Donkey Braying.ogg</a>,
-    public domain / CC0. If this link has moved, swap the URL in <code>SOUND_SOURCE</code> at the top of the script
-    for any donkey-bray recording (e.g. from
-    <a href="https://bigsoundbank.com/donkeys-braying-s1548.html" target="_blank" rel="noopener">bigsoundbank.com</a>
-    or <a href="https://freesound.org/people/felix.blume/packs/9465/" target="_blank" rel="noopener">freesound.org</a>).
+    The tower clock shows your device's local time. Every bray, snort, grumble and sigh here is drawn from real
+    donkey audio recordings (not synthesized) in <code>/audio</code>, reshaped with speed, trim and volume for
+    each reaction. Ask repeatedly at your own risk.
   </footer>
 </div>
 
@@ -395,45 +389,50 @@
   try{ document.getElementById('zone').textContent=Intl.DateTimeFormat().resolvedOptions().timeZone||''; }catch(e){}
   tick(); setInterval(tick,1000);
 
-  /* ---------- audio: real recording, reshaped per reaction ----------
-     One field recording of a donkey bray is the sole audio source. Every
-     reaction below is that same clip played back with a different start
-     point, duration, rate and volume — no oscillators, no synthesis. */
-  var SOUND_SOURCE = 'https://commons.wikimedia.org/wiki/Special:FilePath/Donkey%20Braying.ogg';
+  /* ---------- audio: real recordings, reshaped per reaction ----------
+     Three real donkey audio recordings live in /audio. Every reaction
+     below plays one of them with a different start point, duration,
+     rate and volume — no oscillators, no synthesis. */
+  var FILES = {
+    braying: 'audio/donkey-braying.mp3',  // full bray, explicit "braying" take
+    soft:    'audio/donkey-soft.mp3',     // longer take, used slowed for grumble/sigh/creak
+    short:   'audio/donkey-short.mp3'     // brief take, used for snort
+  };
   var muted = false;
-  var sourceFailed = false;
-  var pool = [];       // small pool of <audio> elements so overlapping cues don't cut each other off
-  var POOL_SIZE = 4;
-  var poolReady = false;
+  var failedFiles = {};
+  var pools = {};      // small per-file pool of <audio> elements so overlapping cues don't cut each other off
+  var POOL_SIZE = 3;
 
   function primeAudio(){
-    if(pool.length) return;
-    for(var i=0;i<POOL_SIZE;i++){
-      var el = new Audio(SOUND_SOURCE);
-      el.preload = 'auto';
-      el.crossOrigin = 'anonymous';
-      try{ el.preservesPitch = false; el.mozPreservesPitch = false; el.webkitPreservesPitch = false; }catch(e){}
-      el.addEventListener('canplaythrough', function(){ poolReady = true; }, {once:true});
-      el.addEventListener('error', function(){
-        if(sourceFailed) return;
-        sourceFailed = true;
-        soundNote.classList.add('show');
-      });
-      pool.push(el);
-    }
+    Object.keys(FILES).forEach(function(key){
+      if(pools[key]) return;
+      pools[key] = [];
+      for(var i=0;i<POOL_SIZE;i++){
+        var el = new Audio(FILES[key]);
+        el.preload = 'auto';
+        try{ el.preservesPitch = false; el.mozPreservesPitch = false; el.webkitPreservesPitch = false; }catch(e){}
+        el.addEventListener('error', function(k){ return function(){
+          if(failedFiles[k]) return;
+          failedFiles[k] = true;
+          soundNote.classList.add('show');
+        };}(key));
+        pools[key].push(el);
+      }
+    });
   }
-  function nextPlayer(){
-    for(var i=0;i<pool.length;i++){ if(pool[i].paused || pool[i].ended) return pool[i]; }
-    return pool[0];
+  function nextPlayer(key){
+    var p = pools[key];
+    for(var i=0;i<p.length;i++){ if(p[i].paused || p[i].ended) return p[i]; }
+    return p[0];
   }
-  /* clip: {start, dur, rate, vol} slices the single recording into a reaction */
+  /* clip: {file, start, dur, rate, vol} plays a slice of one recording */
   function clip(spec){
-    if(muted || sourceFailed) return;
+    if(muted || failedFiles[spec.file]) return;
     primeAudio();
-    var el = nextPlayer();
+    var el = nextPlayer(spec.file);
     try{
       el.pause();
-      el.currentTime = spec.start;
+      el.currentTime = spec.start || 0;
       el.playbackRate = spec.rate || 1;
       el.volume = spec.vol==null ? 1 : spec.vol;
       el.play().catch(function(){ /* needs a user gesture first — fine, next click will work */ });
@@ -451,17 +450,15 @@
     }catch(e){}
   }
 
-  /* start/dur are best-effort offsets into a typical bray recording:
-     the intake "hee" runs first, the loud "haw" mid-clip, a raspy tail
-     trails after — real recordings vary, so these are approximate windows. */
-  function grumble(){ clip({start:0.0, dur:0.7, rate:0.72, vol:0.45}); }
-  function snort(){   clip({start:0.05, dur:0.28, rate:1.35, vol:0.5}); }
+  function grumble(){ clip({file:'short', start:0.0, rate:0.6, vol:0.5}); }
+  function snort(){   clip({file:'short', start:0.0, dur:0.5, rate:1.4, vol:0.55}); }
   function bray(cycles){
     cycles = cycles || 1;
-    clip({start:0, dur: cycles>=3?2.6:1.1, rate:1.0, vol:1});
+    if(cycles>=3){ clip({file:'braying', start:0, rate:1.0, vol:1}); }
+    else{ clip({file:'braying', start:0, dur:1.2, rate:1.05, vol:0.9}); }
   }
-  function creak(){ clip({start:1.6, dur:0.5, rate:0.6, vol:0.4}); }
-  function sigh(){  clip({start:0.2, dur:1.1, rate:0.55, vol:0.35}); }
+  function creak(){ clip({file:'soft', start:2.6, rate:0.55, vol:0.4}); }
+  function sigh(){  clip({file:'soft', start:0.1, dur:1.6, rate:0.5, vol:0.35}); }
 
   sndBtn.addEventListener('click',function(){
     muted=!muted;

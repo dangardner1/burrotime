@@ -1141,6 +1141,15 @@
   function at(ms,fn){ timers.push(setTimeout(fn, reduce?Math.min(ms,80):ms)); }
   function clearAll(){ for(var i=0;i<timers.length;i++) clearTimeout(timers[i]); timers=[]; }
 
+  // guarantee a minimum on-screen hold, measured from when the text
+  // actually appeared (ts) — used so the reveal (and any aside after it)
+  // never fades before the visitor has had a full REVEAL_HOLD_MS to read it
+  var REVEAL_HOLD_MS = 10000;
+  function holdSince(ts, ms, fn){
+    var remaining = ms - (Date.now()-ts);
+    if(remaining > 0) setTimeout(fn, remaining); else fn();
+  }
+
   function endScene(){
     stage.classList.remove('walking');
     running=false;
@@ -1283,6 +1292,7 @@
     var tellJoke = opts.forcedAside ? true : Math.random() < JOKE_CHANCE;
     var selfie = currentVisitor.id==='tourist' && Math.random() < SELFIE_CHANCE;
     var showSign = L.p==='transcendent' && !selfie && Math.random() < SIGN_CHANCE;
+    var revealShownAt = null; // set when the time actually appears — the reveal (and any aside after it) holds at least REVEAL_HOLD_MS from here
 
     w1.textContent=currentVisitor.ask.es; w2.textContent=currentVisitor.ask.en;
     b1.textContent=L.es;   b2.textContent=L.en;
@@ -1315,8 +1325,10 @@
       }
       var shownAt = Date.now();
       speakPhrase(line.es, function(){
-        if(!line.holdMs){ finishUp(); return; }
-        var remaining = line.holdMs - (Date.now()-shownAt);
+        // whichever is stricter: the overall reveal's own hold, or this aside's own (e.g. a note's 10s)
+        var revealRemaining = REVEAL_HOLD_MS - (Date.now()-revealShownAt);
+        var asideRemaining = (line.holdMs||0) - (Date.now()-shownAt);
+        var remaining = Math.max(revealRemaining, asideRemaining);
         if(remaining > 0) setTimeout(finishUp, remaining); else finishUp();
       });
     }
@@ -1337,15 +1349,13 @@
         es: spanishTimePhrase(now.getHours(), now.getMinutes()),
         en: h12+':'+pad(now.getMinutes())+' '+(now.getHours()<12?'AM':'PM')
       };
-      speakTime(tellJoke ? tellJokeAfterTime : undefined);
+      revealShownAt = Date.now();
+      speakTime(tellJoke ? tellJokeAfterTime : function(){ holdSince(revealShownAt, REVEAL_HOLD_MS, finishUp); });
     });
     at(4200, function(){
       stage.classList.add('grumbling'); patienceEl.textContent=PATIENCE_LABELS[L.p];
       if(showSign) stage.classList.add('showSign');
     });
-    if(!tellJoke){
-      at(5600, finishUp);
-    }
   }
 
   askBtn.addEventListener('click', function(){ run(); });

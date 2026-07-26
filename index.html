@@ -89,6 +89,9 @@
   #burroRig{transform-origin:430px 320px;transition:transform 2.2s cubic-bezier(.55,0,.75,.6)}
   .burroGone #burroRig{transform:translateX(-640px)}
   #beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#thoughtBubble,#protestSign{opacity:0;transition:opacity .4s ease}
+  #flash{opacity:0;transition:opacity .6s ease;pointer-events:none}
+  .flash #flash{opacity:1;transition:opacity .08s ease}
+  .flashFade #flash{opacity:0;transition:opacity .6s ease}
   #magnifier{transform-origin:790px 106px;transform:scale(.6);
     transition:opacity .4s ease,transform .5s cubic-bezier(.34,1.5,.5,1)}
   #burroEye{transition:transform .4s ease}
@@ -114,7 +117,7 @@
   @keyframes dozeFade{0%,100%{opacity:.2}50%{opacity:1}}
 
   @media (prefers-reduced-motion:reduce){
-    #walker,#pouch,#arm,#torso,#tail,#beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#burroEye,#burroRig,#burroEyelid,#thoughtBubble,#protestSign
+    #walker,#pouch,#arm,#torso,#tail,#beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#burroEye,#burroRig,#burroEyelid,#thoughtBubble,#protestSign,#flash
       {transition-duration:.01ms}
     #beamCore{animation:none}
     .dozing #thoughtBubble{animation:none}
@@ -324,6 +327,9 @@
         <line id="bigSec" x1="790" y1="106" x2="790" y2="58" stroke="#B4573F" stroke-width="1.8" stroke-linecap="round"/>
         <text x="790" y="184" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#E9C46A" letter-spacing="2">TORRE DE LA MERCED</text>
       </g>
+
+      <!-- camera flash, for the tourist's occasional selfie -->
+      <ellipse id="flash" cx="400" cy="300" rx="420" ry="280" fill="#FFFDF6"/>
 
       <!-- SPEECH -->
       <g id="bubbleWalker">
@@ -935,6 +941,9 @@
      and the pouch (with the sighting-glass) leaves with him. */
   var REFUSE_CHANCE = 0.25;
   var SIGN_CHANCE = 0.4;
+  // the tourist occasionally stops for a selfie mid-reach, camera already raised
+  var SELFIE_CHANCE = 0.5;
+  var SELFIE_AT = 2800;
   var say1=document.getElementById('sayTime'), say2=document.getElementById('sayPart');
 
   function runRefusal(){
@@ -978,7 +987,8 @@
 
     var L=LINES[Math.min(count-1,LINES.length-1)];
     var tellJoke = Math.random() < JOKE_CHANCE;
-    var showSign = L.p==='transcendent' && Math.random() < SIGN_CHANCE;
+    var selfie = currentVisitor.id==='tourist' && Math.random() < SELFIE_CHANCE;
+    var showSign = L.p==='transcendent' && !selfie && Math.random() < SIGN_CHANCE;
     var extra = tellJoke ? 2000 : 0;
 
     w1.textContent=currentVisitor.ask.es; w2.textContent=currentVisitor.ask.en;
@@ -987,6 +997,10 @@
     at(60,   function(){ stage.classList.add('walking'); });
     at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
     at(2500, function(){ stage.classList.add('reaching'); react(Math.min(count,4)); });
+    if(selfie){
+      at(SELFIE_AT,     function(){ stage.classList.add('selfie','flash'); react(1); });
+      at(SELFIE_AT+120, function(){ stage.classList.remove('flash'); stage.classList.add('flashFade'); });
+    }
     at(3100, function(){ stage.classList.add('sighting'); stopMusicSoon(6000); });
     at(3700, function(){ stage.classList.add('telling'); speakTime(); });
     at(4200, function(){
@@ -999,7 +1013,7 @@
       at(4900, function(){ sayOverride=true; say1.textContent=JOKE.es; say2.textContent=JOKE.en; speakPhrase(JOKE.es); });
     }
     at(5600+extra, function(){ w1.textContent=THANKS.es; w2.textContent=THANKS.en; });
-    at(6800+extra, function(){ stage.classList.remove('reaching','sighting','telling','grumbling','asking','showSign'); sayOverride=false; });
+    at(6800+extra, function(){ stage.classList.remove('reaching','sighting','telling','grumbling','asking','showSign','selfie','flash','flashFade'); sayOverride=false; });
     at(7300+extra, endScene);
   }
 

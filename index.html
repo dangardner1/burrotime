@@ -319,6 +319,7 @@
   <div class="controls">
     <button id="ask">Send someone over to ask</button>
     <button id="sound" class="ghost" aria-pressed="true">Sound on</button>
+    <button id="music" class="ghost" aria-pressed="true">Music on</button>
   </div>
 
   <div class="patience">Burro's patience today: <b id="patience">intact</b></div>
@@ -338,7 +339,8 @@
   <footer>
     The tower clock shows your device's local time. Every bray, snort, grumble and sigh here is drawn from real
     donkey audio recordings (not synthesized) in <code>/audio</code>, reshaped with speed, trim and volume for
-    each reaction. Ask repeatedly at your own risk.
+    each reaction. A mariachi recording loops quietly in the background and ducks whenever the burro has something
+    to say. Ask repeatedly at your own risk.
   </footer>
 </div>
 
@@ -347,6 +349,7 @@
   var stage = document.getElementById('stage');
   var askBtn = document.getElementById('ask');
   var sndBtn = document.getElementById('sound');
+  var musicBtn = document.getElementById('music');
   var patienceEl = document.getElementById('patience');
   var soundNote = document.getElementById('soundnote');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -425,7 +428,9 @@
     for(var i=0;i<p.length;i++){ if(p[i].paused || p[i].ended) return p[i]; }
     return p[0];
   }
-  /* clip: {file, start, dur, rate, vol} plays a slice of one recording */
+  /* clip: {file, start, dur, rate, vol, duckMs} plays a slice of one recording.
+     duckMs (best-effort, since we're slicing recordings rather than generating
+     tone) tells the background music how long to duck under this reaction. */
   function clip(spec){
     if(muted || failedFiles[spec.file]) return;
     primeAudio();
@@ -436,6 +441,7 @@
       el.playbackRate = spec.rate || 1;
       el.volume = spec.vol==null ? 1 : spec.vol;
       el.play().catch(function(){ /* needs a user gesture first — fine, next click will work */ });
+      duckMusic(spec.duckMs || (spec.dur ? spec.dur*1000 : 1200));
       if(spec.dur){
         var target = el;
         setTimeout(function(){
@@ -450,14 +456,14 @@
     }catch(e){}
   }
 
-  function grumble(){ clip({file:'short', start:0.0, rate:0.6, vol:0.5}); }
+  function grumble(){ clip({file:'short', start:0.0, rate:0.6, vol:0.5, duckMs:3800}); }
   function snort(){   clip({file:'short', start:0.0, dur:0.5, rate:1.4, vol:0.55}); }
   function bray(cycles){
     cycles = cycles || 1;
-    if(cycles>=3){ clip({file:'braying', start:0, rate:1.0, vol:1}); }
+    if(cycles>=3){ clip({file:'braying', start:0, rate:1.0, vol:1, duckMs:5000}); }
     else{ clip({file:'braying', start:0, dur:1.2, rate:1.05, vol:0.9}); }
   }
-  function creak(){ clip({file:'soft', start:2.6, rate:0.55, vol:0.4}); }
+  function creak(){ clip({file:'soft', start:2.6, rate:0.55, vol:0.4, duckMs:4500}); }
   function sigh(){  clip({file:'soft', start:0.1, dur:1.6, rate:0.5, vol:0.35}); }
 
   sndBtn.addEventListener('click',function(){
@@ -465,6 +471,46 @@
     sndBtn.textContent = muted ? 'Sound off' : 'Sound on';
     sndBtn.setAttribute('aria-pressed', String(!muted));
     if(!muted) primeAudio();
+  });
+
+  /* ---------- background music: one real mariachi recording, looped and ducked ---------- */
+  var MUSIC_FILE = 'audio/mariachi.mp3';
+  var MUSIC_BASE_VOL = 0.35;
+  var MUSIC_DUCK_VOL = 0.10;
+  var musicMuted = false;
+  var musicStarted = false;
+  var musicFailed = false;
+  var music = new Audio(MUSIC_FILE);
+  music.loop = true;
+  music.preload = 'auto';
+  music.volume = 0;
+  music.addEventListener('error', function(){
+    musicFailed = true;
+    soundNote.classList.add('show');
+  });
+
+  var duckUntil = 0;
+  function duckMusic(ms){ duckUntil = Math.max(duckUntil, Date.now() + ms); }
+  setInterval(function(){
+    if(musicFailed) return;
+    var target = musicMuted ? 0 : (Date.now() < duckUntil ? MUSIC_DUCK_VOL : MUSIC_BASE_VOL);
+    var diff = target - music.volume;
+    if(Math.abs(diff) < 0.005){ music.volume = target; return; }
+    music.volume = Math.max(0, Math.min(1, music.volume + diff * 0.15));
+  }, 80);
+
+  function startMusic(){
+    if(musicStarted || musicMuted || musicFailed) return;
+    musicStarted = true;
+    music.play().catch(function(){ musicStarted = false; /* needs a user gesture — next interaction retries */ });
+  }
+  document.addEventListener('click', startMusic);
+
+  musicBtn.addEventListener('click',function(){
+    musicMuted = !musicMuted;
+    musicBtn.textContent = musicMuted ? 'Music off' : 'Music on';
+    musicBtn.setAttribute('aria-pressed', String(!musicMuted));
+    if(!musicMuted) startMusic();
   });
 
   /* ---------- burro body language ---------- */

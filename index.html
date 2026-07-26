@@ -88,7 +88,7 @@
   #earFar{transform-origin:345px 126px}
   #burroRig{transform-origin:430px 320px;transition:transform 2.2s cubic-bezier(.55,0,.75,.6)}
   .burroGone #burroRig{transform:translateX(-640px)}
-  #beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#thoughtBubble{opacity:0;transition:opacity .4s ease}
+  #beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#thoughtBubble,#protestSign{opacity:0;transition:opacity .4s ease}
   #magnifier{transform-origin:790px 106px;transform:scale(.6);
     transition:opacity .4s ease,transform .5s cubic-bezier(.34,1.5,.5,1)}
   #burroEye{transition:transform .4s ease}
@@ -105,6 +105,7 @@
   .sighting #burroEye{transform:translateX(-4px)}
   .telling #bubbleMan{opacity:1}
   .grumbling #bubbleBurro{opacity:1}
+  .showSign #protestSign{opacity:1}
   .dozing #burroEyelid{opacity:1}
   .dozing #thoughtBubble{opacity:1;animation:dozeFade 4s ease-in-out infinite}
 
@@ -113,7 +114,7 @@
   @keyframes dozeFade{0%,100%{opacity:.2}50%{opacity:1}}
 
   @media (prefers-reduced-motion:reduce){
-    #walker,#pouch,#arm,#torso,#tail,#beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#burroEye,#burroRig,#burroEyelid,#thoughtBubble
+    #walker,#pouch,#arm,#torso,#tail,#beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#burroEye,#burroRig,#burroEyelid,#thoughtBubble,#protestSign
       {transition-duration:.01ms}
     #beamCore{animation:none}
     .dozing #thoughtBubble{animation:none}
@@ -356,6 +357,16 @@
         <path d="M420 30 l-7 -9" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
         <path d="M420 30 l7 -9" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
         <path d="M409 30 Q420 24 431 30 L424 63 Q420 69 416 63 Z" fill="#E08B3E"/>
+      </g>
+
+      <!-- the burro's silent protest, shown once patience is fully gone -->
+      <g id="protestSign">
+        <rect x="271" y="392" width="6" height="46" fill="#6E4429"/>
+        <g transform="rotate(-8 280 385)">
+          <rect x="245" y="368" width="70" height="34" rx="3" fill="#C79A5C" stroke="#8C6239" stroke-width="2"/>
+          <text x="280" y="382" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="11" fill="#3A2A1A">SE BUSCA:</text>
+          <text x="280" y="396" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="8" fill="#5A3F26" letter-spacing="1">DESCANSO</text>
+        </g>
       </g>
     </svg>
   </div>
@@ -923,6 +934,7 @@
   /* Once patience is transcendent, sometimes the burro simply leaves —
      and the pouch (with the sighting-glass) leaves with him. */
   var REFUSE_CHANCE = 0.25;
+  var SIGN_CHANCE = 0.4;
   var say1=document.getElementById('sayTime'), say2=document.getElementById('sayPart');
 
   function runRefusal(){
@@ -966,6 +978,7 @@
 
     var L=LINES[Math.min(count-1,LINES.length-1)];
     var tellJoke = Math.random() < JOKE_CHANCE;
+    var showSign = L.p==='transcendent' && Math.random() < SIGN_CHANCE;
     var extra = tellJoke ? 2000 : 0;
 
     w1.textContent=currentVisitor.ask.es; w2.textContent=currentVisitor.ask.en;
@@ -976,14 +989,17 @@
     at(2500, function(){ stage.classList.add('reaching'); react(Math.min(count,4)); });
     at(3100, function(){ stage.classList.add('sighting'); stopMusicSoon(6000); });
     at(3700, function(){ stage.classList.add('telling'); speakTime(); });
-    at(4200, function(){ stage.classList.add('grumbling'); patienceEl.textContent=L.p; });
+    at(4200, function(){
+      stage.classList.add('grumbling'); patienceEl.textContent=L.p;
+      if(showSign) stage.classList.add('showSign');
+    });
     if(tellJoke){
       // an aside about the burro's stress, in Don Aurelio's own bubble —
       // after the live time reading, before it reverts to the digital clock
       at(4900, function(){ sayOverride=true; say1.textContent=JOKE.es; say2.textContent=JOKE.en; speakPhrase(JOKE.es); });
     }
     at(5600+extra, function(){ w1.textContent=THANKS.es; w2.textContent=THANKS.en; });
-    at(6800+extra, function(){ stage.classList.remove('reaching','sighting','telling','grumbling','asking'); sayOverride=false; });
+    at(6800+extra, function(){ stage.classList.remove('reaching','sighting','telling','grumbling','asking','showSign'); sayOverride=false; });
     at(7300+extra, endScene);
   }
 

@@ -340,7 +340,7 @@
     The tower clock shows your device's local time. Every bray, snort, grumble and sigh here is drawn from real
     donkey audio recordings (not synthesized) in <code>/audio</code>, reshaped with speed, trim and volume for
     each reaction. Don Aurelio speaks the time aloud in Spanish (via your browser's voice) each time he's asked.
-    A mariachi recording loops quietly in the background and ducks whenever there's something to hear over it.
+    A mariachi recording plays quietly in the background (once through, no looping) and ducks whenever there's something to hear over it.
     Ask repeatedly at your own risk.
   </footer>
 </div>
@@ -405,10 +405,21 @@
   }
 
   var spanishVoice = null;
+  // The Web Speech API doesn't expose voice gender, so pick by name — these
+  // are the common male/female Spanish voice names shipped by Chrome,
+  // Safari/macOS, Edge and iOS.
+  var MALE_VOICE_HINTS = ['jorge','diego','pablo','raul','raúl','carlos','miguel','andrés','andres',
+    'juan','fernando','alonso','enrique','antonio','javier','male','hombre'];
+  var FEMALE_VOICE_HINTS = ['mónica','monica','paulina','helena','sabina','angélica','angelica',
+    'elvira','lucía','lucia','conchita','esperanza','soledad','female','mujer'];
   function pickSpanishVoice(){
     if(!window.speechSynthesis) return;
-    var voices = speechSynthesis.getVoices();
-    spanishVoice = voices.find(function(v){ return /^es/i.test(v.lang); }) || null;
+    var esVoices = speechSynthesis.getVoices().filter(function(v){ return /^es/i.test(v.lang); });
+    function hints(v,list){ var n=v.name.toLowerCase(); return list.some(function(h){ return n.indexOf(h)!==-1; }); }
+    spanishVoice = esVoices.find(function(v){ return hints(v,MALE_VOICE_HINTS); })
+      || esVoices.find(function(v){ return !hints(v,FEMALE_VOICE_HINTS); })
+      || esVoices[0]
+      || null;
   }
   if(window.speechSynthesis){
     pickSpanishVoice();
@@ -438,7 +449,7 @@
         u.lang = spanishVoice ? spanishVoice.lang : 'es-ES';
         if(spanishVoice) u.voice = spanishVoice;
         u.rate = 0.95;
-        u.pitch = 0.95;
+        u.pitch = 0.75; // lower pitch, since a real male voice isn't guaranteed to be available
         u.onstart = function(){ speaking = true; };
         u.onend = u.onerror = function(){ speaking = false; };
         speechSynthesis.speak(u);
@@ -550,7 +561,7 @@
     if(!muted) primeAudio();
   });
 
-  /* ---------- background music: one real mariachi recording, looped and ducked ---------- */
+  /* ---------- background music: one real mariachi recording, ducked while it plays ---------- */
   var MUSIC_FILE = 'audio/mariachi.mp3';
   var MUSIC_BASE_VOL = 0.35;
   var MUSIC_DUCK_VOL = 0.10;
@@ -558,7 +569,7 @@
   var musicStarted = false;
   var musicFailed = false;
   var music = new Audio(MUSIC_FILE);
-  music.loop = true;
+  music.loop = false;
   music.preload = 'auto';
   music.volume = 0;
   music.addEventListener('error', function(){

@@ -3,16 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>El Reloj — the village timekeeper</title>
-<meta name="description" content="Don Aurelio has told this village the time for forty-one years. He has never owned a watch. He has, however, always owned a burro — and the burro has opinions.">
-<link rel="manifest" href="manifest.webmanifest">
+<title>El Clima — the village weather-teller</title>
+<meta name="description" content="Don Aurelio doesn't own a weather vane. He owns a burro, and old farmers know the ears never lie. Ask him what it's doing outside — wherever you are.">
 <meta name="theme-color" content="#2A1B33">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta property="og:type" content="website">
-<meta property="og:title" content="El Reloj — the village timekeeper">
-<meta property="og:description" content="Don Aurelio has told this village the time for forty-one years. He has never owned a watch. He has, however, always owned a burro — and the burro has opinions.">
-<meta property="og:url" content="https://burrotime.vercel.app/">
+<meta property="og:title" content="El Clima — the village weather-teller">
+<meta property="og:description" content="Don Aurelio doesn't own a weather vane. He owns a burro, and old farmers know the ears never lie. Ask him what it's doing outside — wherever you are.">
+<meta property="og:url" content="https://burrotime.vercel.app/clima.html">
 <meta property="og:image" content="https://burrotime.vercel.app/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="631">
@@ -99,7 +98,6 @@
 
   .walking #walker{transform:translateX(0)}
   .asking  #bubbleWalker{opacity:1}
-  .reaching #pouch{transform:translate(56px,-6px) rotate(16deg)}
   .reaching #arm{transform:rotate(-9deg)}
   .reaching #torso{transform:rotate(-5deg)}
   .reaching #tail{transform:rotate(-26deg)}
@@ -129,13 +127,13 @@
 
   <header>
     <div class="eyebrow">Plaza de la Merced &middot; est. forever</div>
-    <h1>El Reloj</h1>
-    <p class="sub">Don Aurelio has told this village the time for forty-one years. He has never owned a watch. He has, however, always owned a burro — and the burro has opinions.</p>
+    <h1>El Clima</h1>
+    <p class="sub">Don Aurelio doesn't own a weather vane. He owns a burro, and old farmers know: the ears never lie. Ask him what it's doing outside — wherever you are.</p>
   </header>
 
   <div class="stage" id="stage">
     <svg id="scene" viewBox="0 0 900 540" role="img"
-      aria-label="A dusk plaza. A passerby asks an old man the time; he shifts his burro aside to sight the distant clock tower, and the burro objects audibly.">
+      aria-label="A dusk plaza. A passerby asks an old man what the weather is doing; he leans in to study his burro's ears, and the burro objects audibly.">
       <defs>
         <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#4A2F52"/><stop offset="45%" stop-color="#8E5063"/>
@@ -189,20 +187,6 @@
         <rect x="600" y="326" width="140" height="26" fill="#A76B49"/>
         <rect x="740" y="332" width="160" height="20" fill="#8E5A3E"/>
         <rect x="285" y="334" width="90" height="18" fill="#9C6144"/>
-      </g>
-
-      <!-- CLOCK TOWER -->
-      <g id="tower">
-        <rect x="495" y="300" width="42" height="52" fill="#D6A068"/>
-        <rect x="495" y="300" width="42" height="6" fill="#B87B4E"/>
-        <path d="M492 300 L516 280 L540 300 Z" fill="#8E5A3E"/>
-        <rect x="513" y="284" width="5" height="8" fill="#8E5A3E"/>
-        <rect x="501" y="338" width="10" height="14" fill="#8E5A3E" opacity=".6"/>
-        <rect x="521" y="338" width="10" height="14" fill="#8E5A3E" opacity=".6"/>
-        <circle cx="515" cy="322" r="13" fill="#F6EBD6" stroke="#7A4A2E" stroke-width="2.5"/>
-        <circle cx="515" cy="322" r="1.6" fill="#3A2418"/>
-        <line id="twrHour" x1="515" y1="322" x2="515" y2="315" stroke="#3A2418" stroke-width="2.4" stroke-linecap="round"/>
-        <line id="twrMin" x1="515" y1="322" x2="515" y2="312" stroke="#3A2418" stroke-width="1.7" stroke-linecap="round"/>
       </g>
 
       <!-- GROUND -->
@@ -307,25 +291,20 @@
         </g>
       </g>
 
-      <!-- SIGHTLINE -->
+      <!-- SIGHTLINE: Aurelio leaning in to study the burro's ears, not the horizon -->
       <g id="beam">
-        <path d="M650 250 L515 322" stroke="url(#beamGrad)" stroke-width="13" stroke-linecap="round" opacity=".5"/>
-        <path id="beamCore" d="M650 250 L515 322" stroke="#FFF3D6" stroke-width="2.5" stroke-linecap="round"/>
-        <circle cx="515" cy="322" r="17" fill="none" stroke="#FFF3D6" stroke-width="2" opacity=".8"/>
+        <path d="M672 252 L312 108" stroke="url(#beamGrad)" stroke-width="13" stroke-linecap="round" opacity=".5"/>
+        <path id="beamCore" d="M672 252 L312 108" stroke="#FFF3D6" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="312" cy="108" r="17" fill="none" stroke="#FFF3D6" stroke-width="2" opacity=".8"/>
       </g>
 
-      <!-- MAGNIFIER -->
+      <!-- DIAGNOSIS LENS: reveals the weather glyph Aurelio reads off the burro -->
       <g id="magnifier">
         <circle cx="790" cy="106" r="64" fill="#1F1526" opacity=".92"/>
         <circle cx="790" cy="106" r="64" fill="none" stroke="#E9C46A" stroke-width="3"/>
         <circle cx="790" cy="106" r="53" fill="#F6EBD6"/>
-        <g id="ticks" stroke="#7A4A2E" stroke-width="2.5" stroke-linecap="round"></g>
-        <text x="790" y="82" text-anchor="middle" font-family="Georgia,serif" font-size="10" fill="#8A6A4A" letter-spacing="2">XII</text>
-        <circle cx="790" cy="106" r="3.6" fill="#3A2418"/>
-        <line id="bigHour" x1="790" y1="106" x2="790" y2="76" stroke="#3A2418" stroke-width="6.5" stroke-linecap="round"/>
-        <line id="bigMin" x1="790" y1="106" x2="790" y2="62" stroke="#3A2418" stroke-width="4" stroke-linecap="round"/>
-        <line id="bigSec" x1="790" y1="106" x2="790" y2="58" stroke="#B4573F" stroke-width="1.8" stroke-linecap="round"/>
-        <text x="790" y="184" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#E9C46A" letter-spacing="2">TORRE DE LA MERCED</text>
+        <g id="glyphArt" transform="translate(790,106)"></g>
+        <text id="glyphLabel" x="790" y="184" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#E9C46A" letter-spacing="2">EL PRONÓSTICO</text>
       </g>
 
       <!-- camera flash, for the tourist's occasional selfie -->
@@ -335,15 +314,15 @@
       <g id="bubbleWalker">
         <rect x="60" y="192" width="228" height="56" rx="10" fill="#EFE3D2"/>
         <path d="M176 248 l-2 20 l22 -20 Z" fill="#EFE3D2"/>
-        <text id="walkerLine1" x="174" y="217" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#2A1B33">¿Qué hora es?</text>
-        <text id="walkerLine2" x="174" y="236" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6B5A47" letter-spacing="1.2">EXCUSE ME — DO YOU HAVE THE TIME?</text>
+        <text id="walkerLine1" x="174" y="217" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#2A1B33">¿Cómo estará el tiempo?</text>
+        <text id="walkerLine2" x="174" y="236" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6B5A47" letter-spacing="1.2">WHAT'S THE WEATHER GOING TO DO?</text>
       </g>
 
       <g id="bubbleMan">
-        <rect x="738" y="196" width="158" height="58" rx="10" fill="#EFE3D2"/>
+        <rect x="722" y="196" width="174" height="58" rx="10" fill="#EFE3D2"/>
         <path d="M738 224 l-22 8 l22 12 Z" fill="#EFE3D2"/>
-        <text id="sayTime" x="817" y="222" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="#2A1B33">Son las 3:47</text>
-        <text id="sayPart" x="817" y="240" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6B5A47" letter-spacing="1.2">DE LA TARDE</text>
+        <text id="sayMain" x="809" y="222" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="#2A1B33">Despejado.</text>
+        <text id="sayDetail" x="809" y="240" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6B5A47" letter-spacing="1.2">CLEAR SKIES</text>
       </g>
 
       <g id="bubbleBurro">
@@ -377,19 +356,13 @@
     </svg>
   </div>
 
-  <div class="readout">
-    <span class="lbl">Local time</span>
-    <span class="big" id="digital">--:--:--</span>
-    <span class="lbl" id="zone">&#160;</span>
-  </div>
-
   <div class="controls">
     <button id="ask">Manda a alguien a preguntar</button>
     <button id="sound" class="ghost" aria-pressed="true">Con sonido</button>
     <button id="music" class="ghost" aria-pressed="true">Con música</button>
   </div>
 
-  <div class="patience">Burro's patience today: <b id="patience">intact</b></div>
+  <div class="patience">Pronósticos de hoy — burro's patience: <b id="patience">intact</b></div>
 
   <div class="bench">
     <span class="benchlbl">Audition a reaction</span>
@@ -403,7 +376,7 @@
 
   <p class="soundnote" id="soundnote">A recording didn't load — the burro is performing in mime today.</p>
 
-  <footer>¿El clima? El burro lo sabe — pregunte en <a href="clima.html">El Clima</a> →</footer>
+  <footer>¿La hora? Pregunte en <a href="./">El Reloj</a> →</footer>
 </div>
 
 <script>
@@ -415,55 +388,6 @@
   var patienceEl = document.getElementById('patience');
   var soundNote = document.getElementById('soundnote');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  /* ---------- clock ---------- */
-  var ticks = document.getElementById('ticks');
-  for (var i=0;i<12;i++){
-    var a=i*30*Math.PI/180, r1=(i%3===0?41:45), r2=50;
-    var l=document.createElementNS('http://www.w3.org/2000/svg','line');
-    l.setAttribute('x1',790+r1*Math.sin(a)); l.setAttribute('y1',106-r1*Math.cos(a));
-    l.setAttribute('x2',790+r2*Math.sin(a)); l.setAttribute('y2',106-r2*Math.cos(a));
-    if(i%3!==0) l.setAttribute('stroke-width','1.4');
-    ticks.appendChild(l);
-  }
-  function hand(el,cx,cy,len,deg){
-    var a=deg*Math.PI/180;
-    el.setAttribute('x1',cx); el.setAttribute('y1',cy);
-    el.setAttribute('x2',cx+len*Math.sin(a)); el.setAttribute('y2',cy-len*Math.cos(a));
-  }
-  function pad(n){ return n<10?'0'+n:''+n; }
-  function partOfDay(h){
-    if(h<6) return 'DE LA MADRUGADA';
-    if(h<12) return 'DE LA MAÑANA';
-    if(h<20) return 'DE LA TARDE';
-    return 'DE LA NOCHE';
-  }
-  function partOfDaySpanish(h){
-    if(h<6) return 'de la madrugada';
-    if(h<12) return 'de la mañana';
-    if(h<20) return 'de la tarde';
-    return 'de la noche';
-  }
-
-  /* ---------- spoken Spanish time, via the browser's built-in speech voice ---------- */
-  var NUM_WORDS = ['','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez',
-    'once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve','veinte',
-    'veintiuno','veintidós','veintitrés','veinticuatro','veinticinco','veintiséis','veintisiete','veintiocho','veintinueve'];
-  var HOUR_WORDS = ['','una','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce'];
-
-  function spanishTimePhrase(h24, m){
-    var h12 = h24 % 12; if(h12===0) h12=12;
-    var next = (h12 % 12) + 1;
-    function say(h){ return h===1 ? 'Es la una' : 'Son las ' + HOUR_WORDS[h]; }
-    var phrase;
-    if(m === 0)       phrase = say(h12) + ' en punto';
-    else if(m === 15) phrase = say(h12) + ' y cuarto';
-    else if(m === 30) phrase = say(h12) + ' y media';
-    else if(m === 45) phrase = say(next) + ' menos cuarto';
-    else if(m < 30)   phrase = say(h12) + ' y ' + NUM_WORDS[m];
-    else              phrase = say(next) + ' menos ' + NUM_WORDS[60-m];
-    return phrase + ' ' + partOfDaySpanish(h24);
-  }
 
   var spanishVoice = null;
   // The Web Speech API doesn't expose voice gender, so pick by name — these
@@ -521,7 +445,7 @@
   function unlockSpeech(){
     // Safari/iOS only allow speak() when it's a direct result of a user
     // gesture — priming it here (inside the click handler) unlocks it for
-    // the later speakTime() call that fires from a setTimeout.
+    // the later speakForecast() call that fires from a setTimeout.
     if(speechUnlocked || isBraveBrowser || !window.speechSynthesis) return;
     speechUnlocked = true;
     try{
@@ -568,9 +492,8 @@
     // different-sounding voice, so this no longer fights that battle.
     speakUtterance(text, spanishVoice, 0.855, 1, onEnd);
   }
-  function speakTime(onEnd){
-    var d = new Date();
-    speakPhrase(spanishTimePhrase(d.getHours(), d.getMinutes()), onEnd);
+  function speakForecast(entry, tempC, onEnd){
+    speakPhrase(composeForecast(entry, tempC).main.es, onEnd);
   }
   function speakWoman(text){
     // The passerby: most browsers' single default Spanish voice already
@@ -614,24 +537,8 @@
   }
 
   var sayOverride = false; // the refusal scene borrows Don Aurelio's bubble
-  function tick(){
-    var d=new Date(), h=d.getHours(), m=d.getMinutes(), s=d.getSeconds();
-    var hDeg=(h%12)*30+m*0.5+s*(0.5/60), mDeg=m*6+s*0.1, sDeg=s*6;
-    hand(document.getElementById('twrHour'),515,322,7,hDeg);
-    hand(document.getElementById('twrMin'),515,322,10,mDeg);
-    hand(document.getElementById('bigHour'),790,106,30,hDeg);
-    hand(document.getElementById('bigMin'),790,106,44,mDeg);
-    hand(document.getElementById('bigSec'),790,106,48,sDeg);
-    var h12=h%12; if(h12===0) h12=12;
-    if(!sayOverride){
-      document.getElementById('sayTime').textContent=(h12===1?'Es la ':'Son las ')+h12+':'+pad(m);
-      document.getElementById('sayPart').textContent=partOfDay(h);
-    }
-    document.getElementById('digital').textContent=pad(h)+':'+pad(m)+':'+pad(s);
-    applyScenery(h);
-  }
-  try{ document.getElementById('zone').textContent=Intl.DateTimeFormat().resolvedOptions().timeZone||''; }catch(e){}
-  tick(); setInterval(tick,1000);
+  function tick(){ applyScenery(new Date().getHours()); }
+  tick(); setInterval(tick,60000);
 
   /* ---------- audio: real recordings, reshaped per reaction ----------
      Three real donkey audio recordings live in /audio. Every reaction
@@ -842,8 +749,167 @@
     {es:'Ya ni me molesto.',   en:'I DO NOT EVEN FLINCH ANYMORE.', p:'transcendent'}
   ];
   var THANKS={es:'Gracias, don Aurelio.',en:'THANK YOU — AND SORRY, BURRO.'};
-  var JOKE={es:'El burro ya debería estar de baja por estrés.',en:'THAT BURRO SHOULD BE ON STRESS LEAVE BY NOW.'};
-  var JOKE_CHANCE = 0.3;
+  var ASIDE_CHANCE = 0.3;
+
+  /* ---------- the weather table ----------
+     Don Aurelio doesn't own a weather vane — he reads the burro's ears,
+     tail, and mood (old farmer folklore). Each entry maps to a burro pose
+     via the existing react()/anim() machinery, a small glyph shown in the
+     diagnosis lens, and the folklore line Aurelio cites as his source —
+     which doubles as the occasional spoken aside after the forecast. */
+  function sunRays(inner,outer,stroke){
+    var pts=[[0,-1],[.7071,-.7071],[1,0],[.7071,.7071],[0,1],[-.7071,.7071],[-1,0],[-.7071,-.7071]];
+    var s='';
+    for(var i=0;i<pts.length;i++){
+      s += '<line x1="'+(pts[i][0]*inner)+'" y1="'+(pts[i][1]*inner)+'" x2="'+(pts[i][0]*outer)+'" y2="'+(pts[i][1]*outer)+'" stroke="'+stroke+'" stroke-width="3" stroke-linecap="round"/>';
+    }
+    return s;
+  }
+  var GLYPH_CLOUD = '<ellipse cx="-8" cy="2" rx="16" ry="12" fill="#DCE3EA"/><ellipse cx="10" cy="-2" rx="20" ry="15" fill="#EAEFF3"/><ellipse cx="-2" cy="10" rx="24" ry="11" fill="#F4F7F9"/>';
+  var WEATHER = [
+    { id:'despejado', desc:{es:'despejado',en:'CLEAR'},
+      sign:{es:'La oreja izquierda no miente.',en:'THE LEFT EAR NEVER LIES.'},
+      reactLevel:1, wmo:[0],
+      glyph:'<circle r="18" fill="#F2C57C"/>'+sunRays(24,34,'#F2C57C') },
+    { id:'nublado', desc:{es:'nublado',en:'CLOUDY'},
+      sign:{es:'La cola cuelga recta hoy.',en:'THE TAIL HANGS STRAIGHT TODAY.'},
+      reactLevel:1, wmo:[1,2,3],
+      glyph:GLYPH_CLOUD },
+    { id:'neblina', desc:{es:'con neblina',en:'FOGGY'},
+      sign:{es:'Ni el burro ve la torre hoy.',en:'EVEN THE BURRO CAN’T SEE THE TOWER TODAY.'},
+      reactLevel:2, wmo:[45,48],
+      glyph:'<g stroke="#C9D2D8" stroke-width="5" stroke-linecap="round" opacity=".8">'+
+        '<line x1="-26" y1="-10" x2="26" y2="-10"/><line x1="-30" y1="4" x2="30" y2="4"/><line x1="-22" y1="18" x2="22" y2="18"/></g>' },
+    { id:'lluvia', desc:{es:'lluvioso',en:'RAINY'},
+      sign:{es:'Las dos orejas caídas — va a llover.',en:'BOTH EARS DOWN — RAIN IS COMING.'},
+      reactLevel:2, wmo:[51,53,55,56,57,61,63,65,66,67,80,81,82],
+      glyph:GLYPH_CLOUD+'<g stroke="#7CA7D9" stroke-width="3" stroke-linecap="round">'+
+        '<line x1="-14" y1="16" x2="-20" y2="32"/><line x1="0" y1="16" x2="-6" y2="32"/><line x1="14" y1="16" x2="8" y2="32"/></g>' },
+    { id:'nieve', desc:{es:'con nieve',en:'SNOWY'},
+      sign:{es:'El burro tirita — algo raro pasa.',en:'THE BURRO IS SHIVERING — SOMETHING’S OFF.'},
+      reactLevel:3, wmo:[71,73,75,77,85,86],
+      glyph:GLYPH_CLOUD+'<g fill="#EAF3FB"><circle cx="-16" cy="22" r="3"/><circle cx="0" cy="28" r="3"/><circle cx="16" cy="22" r="3"/></g>' },
+    { id:'tormenta', desc:{es:'con tormenta',en:'STORMY'},
+      sign:{es:'La cola no para quieta — tormenta.',en:'THE TAIL WON’T SIT STILL — A STORM.'},
+      reactLevel:3, wmo:[95,96,99],
+      glyph:'<ellipse cx="-6" cy="0" rx="22" ry="15" fill="#7A7E8C"/><ellipse cx="10" cy="-4" rx="18" ry="13" fill="#63677A"/>'+
+        '<path d="M-2 14 L-12 32 L-2 32 L-10 46 L10 24 L0 24 Z" fill="#E9C46A"/>' },
+    { id:'viento', desc:{es:'ventoso',en:'WINDY'},
+      sign:{es:'Una oreja volando de lado — viento fuerte.',en:'ONE EAR BLOWN SIDEWAYS — STRONG WIND.'},
+      reactLevel:2, wmo:[],
+      glyph:'<g fill="none" stroke="#D8E4EC" stroke-width="4" stroke-linecap="round">'+
+        '<path d="M-30 -8 h40 q10 0 10 -8 q0 -8 -9 -8"/><path d="M-30 6 h50 q9 0 9 8 q0 8 -9 8"/><path d="M-30 20 h30"/></g>' },
+    { id:'bochorno', desc:{es:'bochornoso',en:'MUGGY'},
+      sign:{es:'El burro ni se mueve del calor.',en:'THE BURRO WON’T EVEN MOVE, IT’S SO HOT.'},
+      reactLevel:4, wmo:[],
+      glyph:'<circle r="16" fill="#E08B3E"/>'+sunRays(20,28,'#E08B3E')+
+        '<g stroke="#F2C57C" stroke-width="2.5" stroke-linecap="round" opacity=".7"><path d="M-20 30 q6 -8 0 -16 q-6 -8 0 -16"/><path d="M20 30 q6 -8 0 -16 q-6 -8 0 -16"/></g>' },
+    { id:'burro', desc:{es:'de burro',en:'IMPOSSIBLE TO SAY'},
+      sign:{es:'El burro se encoge de hombros. Bueno, orejas.',en:'THE BURRO SHRUGS. WELL, EARS.'},
+      reactLevel:1, wmo:[], fallbackOnly:true,
+      glyph:'<circle r="26" fill="none" stroke="#E9C46A" stroke-width="4"/><text x="0" y="10" text-anchor="middle" font-family="Georgia,serif" font-size="34" fill="#E9C46A">?</text>' }
+  ];
+  var WEATHER_REAL = WEATHER.filter(function(w){ return !w.fallbackOnly; });
+
+  // Kept short (the bubble is a fixed width) — the temperature does the
+  // talking in the real-weather case, and the fallback just names the
+  // guess plainly, with the honesty about it pushed into the small EN
+  // subtitle rather than crowding the main Spanish line.
+  function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+  function composeForecast(entry, tempC){
+    if(tempC != null){
+      return {
+        main:{ es:Math.round(tempC)+'°, '+entry.desc.es+'.',
+               en:Math.round(tempC)+'°C, '+entry.desc.en+'.' },
+        sign: entry.sign
+      };
+    }
+    return {
+      main:{ es:cap(entry.desc.es)+'.', en:entry.desc.en+' (GUESS)' },
+      sign: entry.sign
+    };
+  }
+  function showGlyph(entry){
+    document.getElementById('glyphArt').innerHTML = entry.glyph;
+  }
+
+  /* real weather at the visitor's location (Open-Meteo, no key needed),
+     falling back to a date-seeded invented forecast whenever location is
+     denied, offline, or the request fails/times out. */
+  var GEO_TIMEOUT_MS = 2500;
+  var FORECAST_CACHE_KEY = 'clima-last-forecast';
+  var FORECAST_CACHE_MS = 60*60*1000;
+
+  function pickRealEntry(raw){
+    var code = raw.code, wind = raw.wind, temp = raw.temp;
+    function has(list){ return list.indexOf(code) >= 0; }
+    for(var i=0;i<WEATHER_REAL.length;i++){
+      var w = WEATHER_REAL[i];
+      if(w.id==='tormenta' && has(w.wmo)) return w;
+      if(w.id==='nieve'    && has(w.wmo)) return w;
+      if(w.id==='lluvia'   && has(w.wmo)) return w;
+      if(w.id==='neblina'  && has(w.wmo)) return w;
+    }
+    if(wind != null && wind > 35) return WEATHER_REAL.filter(function(w){return w.id==='viento';})[0];
+    if(code === 0 && temp != null && temp >= 32) return WEATHER_REAL.filter(function(w){return w.id==='bochorno';})[0];
+    if(code === 0) return WEATHER_REAL.filter(function(w){return w.id==='despejado';})[0];
+    return WEATHER_REAL.filter(function(w){return w.id==='nublado';})[0];
+  }
+  // mulberry32 over a YYYY-MM-DD string: same invented forecast for
+  // everyone all day, independent of Math.random() (which still drives
+  // per-visit gags like the cast pick and the aside).
+  function dailySeed(){
+    var d = new Date();
+    var key = d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    var h = 0;
+    for(var i=0;i<key.length;i++){ h = (h*31 + key.charCodeAt(i)) >>> 0; }
+    h |= 0; h = h + 0x6D2B79F5 | 0;
+    var t = Math.imul(h ^ h >>> 15, 1 | h);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    var r = ((t ^ t >>> 14) >>> 0) / 4294967296;
+    return WEATHER[Math.floor(r * WEATHER.length)];
+  }
+
+  function fetchRealForecast(){
+    return new Promise(function(resolve){
+      if(!navigator.geolocation){ resolve(null); return; }
+      var done = false;
+      var timer = setTimeout(function(){ if(!done){ done=true; resolve(null); } }, GEO_TIMEOUT_MS);
+      function finish(v){ if(done) return; done=true; clearTimeout(timer); resolve(v); }
+      try{
+        navigator.geolocation.getCurrentPosition(function(pos){
+          var lat=pos.coords.latitude, lon=pos.coords.longitude;
+          var url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
+            '&current=temperature_2m,weather_code,wind_speed_10m';
+          fetch(url).then(function(r){ return r.json(); }).then(function(data){
+            var cur = data && data.current;
+            if(!cur || cur.weather_code==null){ finish(null); return; }
+            var raw = { temp:cur.temperature_2m, code:cur.weather_code, wind:cur.wind_speed_10m };
+            try{ localStorage.setItem(FORECAST_CACHE_KEY, JSON.stringify({raw:raw, ts:Date.now()})); }catch(e){}
+            finish(raw);
+          }).catch(function(){ finish(null); });
+        }, function(){ finish(null); }, { timeout:GEO_TIMEOUT_MS, maximumAge:10*60*1000 });
+      }catch(e){ finish(null); }
+    });
+  }
+  function cachedRealForecast(){
+    try{
+      var c = JSON.parse(localStorage.getItem(FORECAST_CACHE_KEY)||'null');
+      if(c && (Date.now()-c.ts) < FORECAST_CACHE_MS) return c.raw;
+    }catch(e){}
+    return null;
+  }
+  // Real → last-good cached real (offline revisit) → invented, date-seeded.
+  // Never rejects, always resolves promptly (fetchRealForecast has its own
+  // hard timeout), so the scene never has to wait indefinitely.
+  function getForecast(){
+    return fetchRealForecast().then(function(raw){
+      if(raw) return { entry:pickRealEntry(raw), tempC:raw.temp, real:true };
+      var cached = cachedRealForecast();
+      if(cached) return { entry:pickRealEntry(cached), tempC:cached.temp, real:true };
+      return { entry:dailySeed(), tempC:null, real:false };
+    });
+  }
 
   /* ---------- the passerby cast ----------
      Each visitor re-uses the woman's original body/leg/shadow proportions
@@ -904,9 +970,9 @@
     '<path d="M198 306 q8 4 14 -1" fill="none" stroke="#8A5A44" stroke-width="2.5" stroke-linecap="round"/>';
 
   var CAST = [
-    { id:'woman',   art:WOMAN_ART,   ask:{es:'¿Qué hora es?',en:'EXCUSE ME — DO YOU HAVE THE TIME?'} },
-    { id:'kid',     art:KID_ART,     ask:{es:'¿Oiga, qué hora es?',en:'HEY MISTER, WHAT TIME IS IT?'} },
-    { id:'tourist', art:TOURIST_ART, ask:{es:'Disculpe, ¿qué hora es?',en:'EXCUSE ME, DO YOU KNOW THE TIME?'} }
+    { id:'woman',   art:WOMAN_ART,   ask:{es:'¿Cómo estará el tiempo?',en:'HOW\'S THE WEATHER LOOKING?'} },
+    { id:'kid',     art:KID_ART,     ask:{es:'¿Va a llover, señor?',en:'IS IT GOING TO RAIN, MISTER?'} },
+    { id:'tourist', art:TOURIST_ART, ask:{es:'Disculpe, ¿el pronóstico?',en:'EXCUSE ME, WHAT\'S THE FORECAST?'} }
   ];
   var walkerArt = document.getElementById('walkerArt');
   var currentVisitor = CAST[0];
@@ -921,7 +987,7 @@
 
   /* ---------- the burro remembers ----------
      Patience persists across visits: six quiet hours and all is forgiven. */
-  var PATIENCE_KEY = 'burro-patience';
+  var PATIENCE_KEY = 'burro-patience-clima';
   var FORGIVE_MS = 6*60*60*1000;
   try{
     var saved = JSON.parse(localStorage.getItem(PATIENCE_KEY)||'null');
@@ -945,18 +1011,17 @@
     askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Manda a alguien más';
   }
 
-  /* Once patience is transcendent, sometimes the burro simply leaves —
-     and the pouch (with the sighting-glass) leaves with him. */
+  /* Once patience is transcendent, sometimes the burro simply refuses to
+     be studied any further. */
   var REFUSE_CHANCE = 0.25;
   var SIGN_CHANCE = 0.4;
   // the tourist occasionally stops for a selfie mid-reach, camera already raised
   var SELFIE_CHANCE = 0.5;
-  var SELFIE_AT = 2800;
-  var say1=document.getElementById('sayTime'), say2=document.getElementById('sayPart');
+  var say1=document.getElementById('sayMain'), say2=document.getElementById('sayDetail');
 
   function runRefusal(){
     w1.textContent=currentVisitor.ask.es; w2.textContent=currentVisitor.ask.en;
-    b1.textContent='¡Se acabó!'; b2.textContent='THAT DOES IT. I QUIT.';
+    b1.textContent='¡No soy un barómetro!'; b2.textContent='I AM NOT A BAROMETER!';
 
     at(60,   function(){ stage.classList.add('walking'); });
     at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
@@ -965,9 +1030,9 @@
     at(5400, function(){
       sayOverride=true;
       say1.textContent='No sé…';
-      say2.textContent='SE LLEVÓ EL RELOJ — HE TOOK THE CLOCK';
+      say2.textContent='THE BURRO REFUSED TO SAY ANY MORE';
       stage.classList.add('telling');
-      speakPhrase('No sé. Se llevó el reloj.');
+      speakPhrase('No sé. El burro se negó a decir más.');
     });
     at(7200, function(){ w1.textContent='Vaya.'; w2.textContent='OH. OKAY THEN.'; });
     at(8400, function(){
@@ -994,7 +1059,7 @@
     if(count>4 && Math.random()<REFUSE_CHANCE){ runRefusal(); return; }
 
     var L=LINES[Math.min(count-1,LINES.length-1)];
-    var tellJoke = Math.random() < JOKE_CHANCE;
+    var tellAside = Math.random() < ASIDE_CHANCE;
     var selfie = currentVisitor.id==='tourist' && Math.random() < SELFIE_CHANCE;
     var showSign = L.p==='transcendent' && !selfie && Math.random() < SIGN_CHANCE;
 
@@ -1010,33 +1075,55 @@
       at(1700, endScene);
     }
 
-    // an aside about the burro's stress, in Don Aurelio's own bubble — only
-    // starts once the live time reading has actually finished speaking, so
-    // it can never cut the time announcement off mid-sentence
-    function tellJokeAfterTime(){
-      sayOverride=true; say1.textContent=JOKE.es; say2.textContent=JOKE.en;
-      speakPhrase(JOKE.es, finishUp);
+    // the aside cites the folklore behind this forecast, in Don Aurelio's
+    // own bubble — only starts once the forecast has actually finished
+    // speaking, so it can never cut the reading off mid-sentence
+    function tellAsideAfterForecast(entry){
+      return function(){
+        sayOverride=true; say1.textContent=entry.sign.es; say2.textContent=entry.sign.en;
+        speakPhrase(entry.sign.es, finishUp);
+      };
     }
 
     at(60,   function(){ stage.classList.add('walking'); });
     at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
-    at(2500, function(){ stage.classList.add('reaching'); react(Math.min(count,4)); });
-    if(selfie){
-      at(SELFIE_AT,     function(){ stage.classList.add('selfie','flash'); react(1); });
-      at(SELFIE_AT+120, function(){ stage.classList.remove('flash'); stage.classList.add('flashFade'); });
-    }
-    at(3100, function(){ stage.classList.add('sighting'); stopMusicSoon(6000); });
-    at(3700, function(){
-      stage.classList.add('telling');
-      speakTime(tellJoke ? tellJokeAfterTime : undefined);
+
+    // The forecast itself (real, at the visitor's location, or an
+    // invented date-seeded fallback) is fetched asynchronously and never
+    // holds up the scene — fetchRealForecast() has its own hard timeout,
+    // so this resolves quickly either way. Everything from the burro's
+    // reading onward is scheduled relative to that resolution, with a
+    // floor at the original ~2500ms mark so a fast/cached/denied lookup
+    // never rushes the pacing.
+    var t0 = Date.now();
+    getForecast().then(function(result){
+      var entry = result.entry, tempC = result.tempC;
+      var d = Math.max(0, 2500 - (Date.now() - t0));
+
+      at(d, function(){
+        stage.classList.add('reaching');
+        react(entry.reactLevel);
+        showGlyph(entry);
+      });
+      if(selfie){
+        at(d+300, function(){ stage.classList.add('selfie','flash'); react(1); });
+        at(d+420, function(){ stage.classList.remove('flash'); stage.classList.add('flashFade'); });
+      }
+      at(d+600, function(){ stage.classList.add('sighting'); stopMusicSoon(6000); });
+      at(d+1200, function(){
+        stage.classList.add('telling');
+        var f = composeForecast(entry, tempC);
+        say1.textContent = f.main.es; say2.textContent = f.main.en;
+        speakForecast(entry, tempC, tellAside ? tellAsideAfterForecast(entry) : undefined);
+      });
+      at(d+1700, function(){
+        stage.classList.add('grumbling'); patienceEl.textContent=L.p;
+        if(showSign) stage.classList.add('showSign');
+      });
+      if(!tellAside){
+        at(d+3100, finishUp);
+      }
     });
-    at(4200, function(){
-      stage.classList.add('grumbling'); patienceEl.textContent=L.p;
-      if(showSign) stage.classList.add('showSign');
-    });
-    if(!tellJoke){
-      at(5600, finishUp);
-    }
   }
 
   askBtn.addEventListener('click',run);

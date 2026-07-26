@@ -904,7 +904,8 @@
       return {
         es: 'Tu aviso, como pediste: ' + note + '.',
         en: 'YOUR REMINDER, AS REQUESTED: ' + note.toUpperCase() + '.',
-        level: bucket.level
+        level: bucket.level,
+        holdMs: 10000 // the user's own note stays fully on screen for a full 10s, not however long the speech happens to take
       };
     }
     return bucket;
@@ -1263,7 +1264,12 @@
     function tellJokeAfterTime(){
       var line = opts.forcedAside || JOKE;
       sayOverride=true; say1.textContent=line.es; say2.textContent=line.en;
-      speakPhrase(line.es, finishUp);
+      var shownAt = Date.now();
+      speakPhrase(line.es, function(){
+        if(!line.holdMs){ finishUp(); return; }
+        var remaining = line.holdMs - (Date.now()-shownAt);
+        if(remaining > 0) setTimeout(finishUp, remaining); else finishUp();
+      });
     }
 
     at(60,   function(){ stage.classList.add('walking'); });

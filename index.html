@@ -443,6 +443,13 @@
   function pickSpanishVoice(){
     if(!window.speechSynthesis) return;
     var esVoices = speechSynthesis.getVoices().filter(function(v){ return /^es/i.test(v.lang); });
+    // Prefer on-device voices over network ones: a "remote" voice needs a
+    // live call to a speech server to actually produce Spanish-sounding
+    // audio, and privacy-hardened browsers (Brave's Shields, for one) can
+    // block or spoof that network leg while still reporting the voice as
+    // available — which is how you get Spanish text read in an English
+    // accent even though a matching es-* voice was "found".
+    esVoices.sort(function(a,b){ return (b.localService?1:0) - (a.localService?1:0); });
     function hints(v,list){ var n=normalize(v.name); return list.some(function(h){ return n.indexOf(h)!==-1; }); }
     var maleMatch = esVoices.find(function(v){ return hints(v,MALE_VOICE_HINTS); });
     spanishVoice = maleMatch
@@ -508,9 +515,7 @@
   }
   function speakTime(){
     var d = new Date();
-    speakPhrase(spanishTimePhrase(d.getHours(), d.getMinutes()), function(){
-      stopMusicSoon(10000);
-    });
+    speakPhrase(spanishTimePhrase(d.getHours(), d.getMinutes()));
   }
   function speakWoman(text){
     // The passerby: most browsers' single default Spanish voice already
@@ -868,7 +873,7 @@
     at(60,   function(){ stage.classList.add('walking'); });
     at(1650, function(){ stage.classList.add('asking'); speakWoman(ASK.es); });
     at(2500, function(){ stage.classList.add('reaching'); react(Math.min(count,4)); });
-    at(3100, function(){ stage.classList.add('sighting'); });
+    at(3100, function(){ stage.classList.add('sighting'); stopMusicSoon(6000); });
     at(3700, function(){ stage.classList.add('telling'); speakTime(); });
     at(4200, function(){ stage.classList.add('grumbling'); patienceEl.textContent=L.p; });
     if(tellJoke){

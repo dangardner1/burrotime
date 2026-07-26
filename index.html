@@ -405,18 +405,25 @@
   }
 
   var spanishVoice = null;
+  var spanishVoiceIsMaleMatch = false;
   // The Web Speech API doesn't expose voice gender, so pick by name — these
-  // are the common male/female Spanish voice names shipped by Chrome,
-  // Safari/macOS, Edge and iOS.
-  var MALE_VOICE_HINTS = ['jorge','diego','pablo','raul','raúl','carlos','miguel','andrés','andres',
-    'juan','fernando','alonso','enrique','antonio','javier','male','hombre'];
-  var FEMALE_VOICE_HINTS = ['mónica','monica','paulina','helena','sabina','angélica','angelica',
-    'elvira','lucía','lucia','conchita','esperanza','soledad','female','mujer'];
+  // are common male/female Spanish voice names across Chrome, Google Cloud/
+  // Android, Safari/macOS/iOS, and Edge/Windows.
+  var MALE_VOICE_HINTS = ['jorge','diego','pablo','raul','carlos','miguel','andres','juan','fernando',
+    'alonso','enrique','antonio','javier','alex','matias','mateo','tomas','felipe','francisco','luis',
+    'ricardo','eduardo','ivan','martin','pedro','sergio','oscar','daniel','jose','male','hombre','-b)','-d)'];
+  var FEMALE_VOICE_HINTS = ['monica','paulina','helena','sabina','angelica','elvira','lucia','conchita',
+    'esperanza','soledad','laura','marisol','isabela','camila','valentina','sofia','female','mujer','-a)','-c)'];
+  function normalize(s){
+    return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); // strip accents
+  }
   function pickSpanishVoice(){
     if(!window.speechSynthesis) return;
     var esVoices = speechSynthesis.getVoices().filter(function(v){ return /^es/i.test(v.lang); });
-    function hints(v,list){ var n=v.name.toLowerCase(); return list.some(function(h){ return n.indexOf(h)!==-1; }); }
-    spanishVoice = esVoices.find(function(v){ return hints(v,MALE_VOICE_HINTS); })
+    function hints(v,list){ var n=normalize(v.name); return list.some(function(h){ return n.indexOf(h)!==-1; }); }
+    var maleMatch = esVoices.find(function(v){ return hints(v,MALE_VOICE_HINTS); });
+    spanishVoiceIsMaleMatch = !!maleMatch;
+    spanishVoice = maleMatch
       || esVoices.find(function(v){ return !hints(v,FEMALE_VOICE_HINTS); })
       || esVoices[0]
       || null;
@@ -449,7 +456,10 @@
         u.lang = spanishVoice ? spanishVoice.lang : 'es-ES';
         if(spanishVoice) u.voice = spanishVoice;
         u.rate = 0.95;
-        u.pitch = 0.75; // lower pitch, since a real male voice isn't guaranteed to be available
+        // A confirmed male-named voice only needs a slight lower pitch to sound
+        // natural; without one (e.g. a browser exposing a single default voice
+        // that reads female), drop the pitch hard so it reads as male regardless.
+        u.pitch = spanishVoiceIsMaleMatch ? 0.9 : 0.55;
         u.onstart = function(){ speaking = true; };
         u.onend = u.onerror = function(){ speaking = false; };
         speechSynthesis.speak(u);
@@ -566,7 +576,6 @@
   var MUSIC_BASE_VOL = 0.35;
   var MUSIC_DUCK_VOL = 0.10;
   var musicMuted = false;
-  var musicStarted = false;
   var musicFailed = false;
   var music = new Audio(MUSIC_FILE);
   music.loop = false;
@@ -587,18 +596,19 @@
     music.volume = Math.max(0, Math.min(1, music.volume + diff * 0.15));
   }, 80);
 
-  function startMusic(){
-    if(musicStarted || musicMuted || musicFailed) return;
-    musicStarted = true;
-    music.play().catch(function(){ musicStarted = false; /* needs a user gesture — next interaction retries */ });
+  function playMusic(){
+    if(musicMuted || musicFailed) return;
+    try{
+      music.currentTime = 0;
+      music.play().catch(function(){ /* needs a user gesture — the next ask-button press will retry */ });
+    }catch(e){}
   }
-  document.addEventListener('click', startMusic);
 
   musicBtn.addEventListener('click',function(){
     musicMuted = !musicMuted;
     musicBtn.textContent = musicMuted ? 'Music off' : 'Music on';
     musicBtn.setAttribute('aria-pressed', String(!musicMuted));
-    if(!musicMuted) startMusic();
+    if(!musicMuted) playMusic();
   });
 
   /* ---------- burro body language ---------- */
@@ -654,6 +664,7 @@
   function run(){
     if(running) return;
     unlockSpeech();
+    playMusic();
     running=true; askBtn.disabled=true;
     clearAll();
     stage.className='stage';

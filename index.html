@@ -483,11 +483,22 @@
         var u = new SpeechSynthesisUtterance(text);
         u.lang = spanishVoice ? spanishVoice.lang : 'es-ES';
         if(spanishVoice) u.voice = spanishVoice;
-        u.rate = 0.95;
         // A confirmed male-named voice only needs a slight lower pitch to sound
         // natural; without one (e.g. a browser exposing a single default voice
-        // that reads female), drop the pitch hard so it reads as male regardless.
-        u.pitch = spanishVoiceIsMaleMatch ? 0.9 : 0.55;
+        // that reads female — Safari/iOS ship only "Mónica"/"Paulina", both
+        // female, with no male Spanish voice at all unless the user manually
+        // downloads one), drop the pitch hard so it reads as male regardless.
+        // Safari is also documented to clamp the effective pitch range more
+        // than Chrome/Edge, so the fallback needs to go more extreme there
+        // to be audible at all.
+        var isSafari = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
+        if(spanishVoiceIsMaleMatch){
+          u.rate = 0.95; u.pitch = 0.9;
+        } else if(isSafari){
+          u.rate = 0.82; u.pitch = 0.15;
+        } else {
+          u.rate = 0.95; u.pitch = 0.55;
+        }
         u.onstart = function(){ speaking = true; };
         u.onend = u.onerror = function(){ speaking = false; };
         speechSynthesis.speak(u);

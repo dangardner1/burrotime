@@ -497,7 +497,7 @@
       speechSynthesis.speak(warm);
     }catch(e){}
   }
-  function speakUtterance(text, voice, rate, pitch){
+  function speakUtterance(text, voice, rate, pitch, onEnd){
     if(muted || !window.speechSynthesis) return;
     function doSpeak(){
       try{
@@ -507,7 +507,8 @@
         u.rate = rate;
         u.pitch = pitch;
         u.onstart = function(){ speaking = true; };
-        u.onend = u.onerror = function(){ speaking = false; };
+        u.onend = function(){ speaking = false; if(onEnd) onEnd(); };
+        u.onerror = function(){ speaking = false; };
         speechSynthesis.speak(u);
       }catch(e){}
     }
@@ -520,19 +521,23 @@
       doSpeak();
     }
   }
-  function speakPhrase(text){
+  function speakPhrase(text, onEnd){
     // Don Aurelio: a confirmed male-named voice only needs a slight lower
     // pitch to sound natural; without one, drop the pitch hard so it reads
-    // as male regardless — harder still on Safari/Brave (see above).
+    // as male regardless — harder still on Safari/Brave, which are known to
+    // clamp SpeechSynthesisUtterance.pitch to a narrower effective range
+    // than they report, so this pushes all the way to the API floor.
     var rate, pitch;
     if(spanishVoiceIsMaleMatch){ rate=0.95; pitch=0.9; }
-    else if(needsHardFallback()){ rate=0.82; pitch=0.15; }
+    else if(needsHardFallback()){ rate=0.78; pitch=0.02; }
     else { rate=0.95; pitch=0.55; }
-    speakUtterance(text, spanishVoice, rate, pitch);
+    speakUtterance(text, spanishVoice, rate, pitch, onEnd);
   }
   function speakTime(){
     var d = new Date();
-    speakPhrase(spanishTimePhrase(d.getHours(), d.getMinutes()));
+    speakPhrase(spanishTimePhrase(d.getHours(), d.getMinutes()), function(){
+      stopMusicSoon(10000);
+    });
   }
   function speakWoman(text){
     // The passerby: most browsers' single default Spanish voice already
@@ -623,6 +628,22 @@
           soundNote.classList.add('show');
         };}(key));
         pools[key].push(el);
+        // Safari/WebKit require each <audio> element's first play() to happen
+        // synchronously within a user gesture, or later plays (like the ones
+        // clip() fires from a setTimeout deep into the ask animation) silently
+        // fail. primeAudio() is now called at click time (see run()), so
+        // unlock every pool element here — muted play+immediate pause —
+        // exactly like unlockSpeech() does for speech synthesis.
+        el.muted = true;
+        (function(unlockEl){
+          var p = unlockEl.play();
+          if(p && p.then){
+            p.then(function(){ unlockEl.pause(); unlockEl.currentTime = 0; unlockEl.muted = false; })
+             .catch(function(){ unlockEl.muted = false; });
+          } else {
+            unlockEl.muted = false;
+          }
+        })(el);
       }
     });
   }
@@ -706,17 +727,31 @@
 
   var duckUntil = 0;
   function duckMusic(ms){ duckUntil = Math.max(duckUntil, Date.now() + ms); }
+
+  var hardStopped = false;
+  var stopTimer = null;
+  function stopMusicSoon(ms){
+    if(stopTimer) clearTimeout(stopTimer);
+    stopTimer = setTimeout(function(){ hardStopped = true; }, ms);
+  }
+
   setInterval(function(){
     if(musicFailed) return;
-    var target = musicMuted ? 0 : ((speaking || Date.now() < duckUntil) ? MUSIC_DUCK_VOL : MUSIC_BASE_VOL);
+    var target = (musicMuted || hardStopped) ? 0 : ((speaking || Date.now() < duckUntil) ? MUSIC_DUCK_VOL : MUSIC_BASE_VOL);
     var diff = target - music.volume;
-    if(Math.abs(diff) < 0.005){ music.volume = target; return; }
+    if(Math.abs(diff) < 0.005){
+      music.volume = target;
+      if(target===0 && !music.paused) music.pause();
+      return;
+    }
     music.volume = Math.max(0, Math.min(1, music.volume + diff * 0.15));
   }, 80);
 
   function playMusic(){
     if(musicMuted || musicFailed) return;
     try{
+      if(stopTimer){ clearTimeout(stopTimer); stopTimer = null; }
+      hardStopped = false;
       music.src = pickTrack();
       music.currentTime = 0;
       music.play().catch(function(){ /* needs a user gesture — the next ask-button press will retry */ });
@@ -835,6 +870,7 @@
   function run(){
     if(running) return;
     unlockSpeech();
+    primeAudio();
     playMusic();
     running=true; askBtn.disabled=true;
     clearAll();

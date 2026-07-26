@@ -605,18 +605,21 @@
         // synchronously within a user gesture, or later plays (like the ones
         // clip() fires from a setTimeout deep into the ask animation) silently
         // fail. primeAudio() is now called at click time (see run()), so
-        // unlock every pool element here — muted play+immediate pause —
-        // exactly like unlockSpeech() does for speech synthesis.
+        // unlock every pool element here — muted play, then immediately
+        // pause without waiting on the play() promise. Waiting for that
+        // promise before pausing/unmuting left a race: if a real clip()
+        // call reused this same element (e.g. on a slow connection, right
+        // around the ask animation's 2.5s mark) before the promise settled,
+        // the delayed unlock handler would pause/reset the element out from
+        // under the real playback that had already started.
         el.muted = true;
-        (function(unlockEl){
-          var p = unlockEl.play();
-          if(p && p.then){
-            p.then(function(){ unlockEl.pause(); unlockEl.currentTime = 0; unlockEl.muted = false; })
-             .catch(function(){ unlockEl.muted = false; });
-          } else {
-            unlockEl.muted = false;
-          }
-        })(el);
+        try{
+          var unlockPromise = el.play();
+          if(unlockPromise && unlockPromise.catch) unlockPromise.catch(function(){});
+        }catch(e){}
+        el.pause();
+        el.currentTime = 0;
+        el.muted = false;
       }
     });
   }

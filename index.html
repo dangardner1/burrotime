@@ -88,10 +88,14 @@
   #earFar{transform-origin:345px 126px}
   #burroRig{transform-origin:430px 320px;transition:transform 2.2s cubic-bezier(.55,0,.75,.6)}
   .burroGone #burroRig{transform:translateX(-640px)}
-  #beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker{opacity:0;transition:opacity .4s ease}
+  #beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#thoughtBubble,#protestSign{opacity:0;transition:opacity .4s ease}
+  #flash{opacity:0;transition:opacity .6s ease;pointer-events:none}
+  .flash #flash{opacity:1;transition:opacity .08s ease}
+  .flashFade #flash{opacity:0;transition:opacity .6s ease}
   #magnifier{transform-origin:790px 106px;transform:scale(.6);
     transition:opacity .4s ease,transform .5s cubic-bezier(.34,1.5,.5,1)}
   #burroEye{transition:transform .4s ease}
+  #burroEyelid{transition:opacity .8s ease}
 
   .walking #walker{transform:translateX(0)}
   .asking  #bubbleWalker{opacity:1}
@@ -104,14 +108,19 @@
   .sighting #burroEye{transform:translateX(-4px)}
   .telling #bubbleMan{opacity:1}
   .grumbling #bubbleBurro{opacity:1}
+  .showSign #protestSign{opacity:1}
+  .dozing #burroEyelid{opacity:1}
+  .dozing #thoughtBubble{opacity:1;animation:dozeFade 4s ease-in-out infinite}
 
   #beamCore{stroke-dasharray:7 9;animation:march 1.1s linear infinite}
   @keyframes march{to{stroke-dashoffset:-32}}
+  @keyframes dozeFade{0%,100%{opacity:.2}50%{opacity:1}}
 
   @media (prefers-reduced-motion:reduce){
-    #walker,#pouch,#arm,#torso,#tail,#beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#burroEye,#burroRig
+    #walker,#pouch,#arm,#torso,#tail,#beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#burroEye,#burroRig,#burroEyelid,#thoughtBubble,#protestSign,#flash
       {transition-duration:.01ms}
     #beamCore{animation:none}
+    .dozing #thoughtBubble{animation:none}
   }
 </style>
 </head>
@@ -229,6 +238,7 @@
         <g id="earFar"><ellipse cx="345" cy="104" rx="9" ry="26" fill="#8E8078" transform="rotate(4 345 104)"/></g>
         <path d="M318 106 q22 26 34 60" fill="none" stroke="#5A4F49" stroke-width="10" stroke-linecap="round"/>
         <g id="burroEye"><circle cx="306" cy="128" r="4.6" fill="#2E2724"/><circle cx="307.4" cy="126.6" r="1.4" fill="#EDE2D4"/></g>
+        <ellipse id="burroEyelid" cx="306" cy="128" rx="7.5" ry="5" fill="#96887F" opacity="0"/>
         <rect x="348" y="296" width="19" height="88" rx="8" fill="#8E8078"/>
         <rect x="348" y="366" width="19" height="18" rx="4" fill="#4A423E"/>
         <rect x="545" y="296" width="19" height="88" rx="8" fill="#8E8078"/>
@@ -271,6 +281,7 @@
 
       <!-- ===== PASSERBY ===== -->
       <g id="walker">
+        <g id="walkerArt">
         <ellipse cx="188" cy="448" rx="46" ry="10" fill="#4E2F1E" opacity=".35"/>
         <path d="M164 372 h50 l20 74 h-90 Z" fill="#3E6B72"/>
         <path d="M144 446 h90" stroke="#2E545A" stroke-width="6"/>
@@ -293,6 +304,7 @@
         <path d="M190 270 q-24 4 -21 32 l-8 4 q-6 -44 29 -42 Z" fill="#7C4B86"/>
         <circle cx="204" cy="298" r="2.8" fill="#2E2119"/>
         <path d="M198 306 q8 4 14 -1" fill="none" stroke="#8A5A44" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
       </g>
 
       <!-- SIGHTLINE -->
@@ -316,6 +328,9 @@
         <text x="790" y="184" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#E9C46A" letter-spacing="2">TORRE DE LA MERCED</text>
       </g>
 
+      <!-- camera flash, for the tourist's occasional selfie -->
+      <ellipse id="flash" cx="400" cy="300" rx="420" ry="280" fill="#FFFDF6"/>
+
       <!-- SPEECH -->
       <g id="bubbleWalker">
         <rect x="60" y="192" width="228" height="56" rx="10" fill="#EFE3D2"/>
@@ -336,6 +351,28 @@
         <path d="M352 76 l-8 18 l26 -18 Z" fill="#EFE3D2"/>
         <text id="burroLine1" x="436" y="48" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="17" fill="#2A1B33">…</text>
         <text id="burroLine2" x="436" y="66" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6B5A47" letter-spacing="1.2">&#160;</text>
+      </g>
+
+      <!-- daydream, shown only when nobody's asked in a while -->
+      <g id="thoughtBubble">
+        <circle cx="360" cy="86" r="10" fill="#EFE3D2"/>
+        <circle cx="342" cy="102" r="6" fill="#EFE3D2"/>
+        <circle cx="330" cy="114" r="3.4" fill="#EFE3D2"/>
+        <ellipse cx="420" cy="48" rx="90" ry="36" fill="#EFE3D2"/>
+        <path d="M420 30 l0 -12" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
+        <path d="M420 30 l-7 -9" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
+        <path d="M420 30 l7 -9" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
+        <path d="M409 30 Q420 24 431 30 L424 63 Q420 69 416 63 Z" fill="#E08B3E"/>
+      </g>
+
+      <!-- the burro's silent protest, shown once patience is fully gone -->
+      <g id="protestSign">
+        <rect x="271" y="392" width="6" height="46" fill="#6E4429"/>
+        <g transform="rotate(-8 280 385)">
+          <rect x="245" y="368" width="70" height="34" rx="3" fill="#C79A5C" stroke="#8C6239" stroke-width="2"/>
+          <text x="280" y="382" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="11" fill="#3A2A1A">SE BUSCA:</text>
+          <text x="280" y="396" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="8" fill="#5A3F26" letter-spacing="1">DESCANSO</text>
+        </g>
       </g>
     </svg>
   </div>
@@ -797,9 +834,78 @@
     {es:'Ya ni me molesto.',   en:'I DO NOT EVEN FLINCH ANYMORE.', p:'transcendent'}
   ];
   var THANKS={es:'Gracias, don Aurelio.',en:'THANK YOU — AND SORRY, BURRO.'};
-  var ASK={es:'¿Qué hora es?',en:'EXCUSE ME — DO YOU HAVE THE TIME?'};
   var JOKE={es:'El burro ya debería estar de baja por estrés.',en:'THAT BURRO SHOULD BE ON STRESS LEAVE BY NOW.'};
   var JOKE_CHANCE = 0.3;
+
+  /* ---------- the passerby cast ----------
+     Each visitor re-uses the woman's original body/leg/shadow proportions
+     (same footprint, same standing height) so the walk-in animation never
+     jumps — only the recolored costume/prop details differ per visitor. */
+  var WOMAN_ART =
+    '<ellipse cx="188" cy="448" rx="46" ry="10" fill="#4E2F1E" opacity=".35"/>'+
+    '<path d="M164 372 h50 l20 74 h-90 Z" fill="#3E6B72"/>'+
+    '<path d="M144 446 h90" stroke="#2E545A" stroke-width="6"/>'+
+    '<ellipse cx="170" cy="450" rx="12" ry="6" fill="#33251C"/>'+
+    '<ellipse cx="206" cy="450" rx="12" ry="6" fill="#33251C"/>'+
+    '<path d="M162 316 q26 -10 52 0 l4 58 q-30 10 -60 0 Z" fill="#F0E5D4"/>'+
+    '<path d="M162 316 q26 -10 52 0 l-6 26 q-20 -8 -40 0 Z" fill="#7C4B86"/>'+
+    '<path d="M208 340 q10 30 4 64" fill="none" stroke="#7C4B86" stroke-width="10" stroke-linecap="round"/>'+
+    '<path d="M166 328 q-24 20 -22 46" fill="none" stroke="#F0E5D4" stroke-width="13" stroke-linecap="round"/>'+
+    '<g><path d="M120 372 h48 l-7 34 h-34 Z" fill="#C79A5C"/><path d="M120 372 h48" stroke="#A97C42" stroke-width="5"/>'+
+    '<path d="M128 372 q16 -22 32 0" fill="none" stroke="#A97C42" stroke-width="4"/>'+
+    '<circle cx="134" cy="368" r="7" fill="#B4573F"/><circle cx="148" cy="365" r="8" fill="#7F9455"/><circle cx="160" cy="369" r="6" fill="#D9A03F"/></g>'+
+    '<circle cx="190" cy="298" r="21" fill="#C99A72"/>'+
+    '<path d="M169 296 q0 -26 21 -26 q21 0 21 26 q-8 -12 -21 -12 q-13 0 -21 12 Z" fill="#2E2119"/>'+
+    '<path d="M190 270 q-24 4 -21 32 l-8 4 q-6 -44 29 -42 Z" fill="#7C4B86"/>'+
+    '<circle cx="204" cy="298" r="2.8" fill="#2E2119"/>'+
+    '<path d="M198 306 q8 4 14 -1" fill="none" stroke="#8A5A44" stroke-width="2.5" stroke-linecap="round"/>';
+
+  var KID_ART =
+    '<g transform="translate(190,452) scale(.62) translate(-190,-452)">'+
+    '<ellipse cx="188" cy="448" rx="46" ry="10" fill="#4E2F1E" opacity=".35"/>'+
+    '<path d="M164 372 h50 l20 74 h-90 Z" fill="#4C7A9E"/>'+
+    '<path d="M144 446 h90" stroke="#345A73" stroke-width="6"/>'+
+    '<ellipse cx="170" cy="450" rx="12" ry="6" fill="#33251C"/>'+
+    '<ellipse cx="206" cy="450" rx="12" ry="6" fill="#33251C"/>'+
+    '<path d="M162 316 q26 -10 52 0 l4 58 q-30 10 -60 0 Z" fill="#E4602F"/>'+
+    '<path d="M208 340 q10 30 4 64" fill="none" stroke="#E4602F" stroke-width="10" stroke-linecap="round"/>'+
+    '<path d="M166 328 q-24 20 -22 46" fill="none" stroke="#E4602F" stroke-width="13" stroke-linecap="round"/>'+
+    '<circle cx="190" cy="298" r="21" fill="#D9A97B"/>'+
+    '<path d="M169 288 q0 -20 21 -20 q21 0 21 20 q-4 -6 -21 -6 q-17 0 -21 6 Z" fill="#4A3324"/>'+
+    '<circle cx="204" cy="298" r="2.8" fill="#2E2119"/>'+
+    '<path d="M198 306 q8 6 14 0" fill="none" stroke="#8A5A44" stroke-width="2.5" stroke-linecap="round"/>'+
+    '</g>';
+
+  var TOURIST_ART =
+    '<ellipse cx="188" cy="448" rx="46" ry="10" fill="#4E2F1E" opacity=".35"/>'+
+    '<path d="M164 372 h50 l20 74 h-90 Z" fill="#8A9A7E"/>'+
+    '<path d="M144 446 h90" stroke="#5F6E54" stroke-width="6"/>'+
+    '<ellipse cx="170" cy="450" rx="12" ry="6" fill="#33251C"/>'+
+    '<ellipse cx="206" cy="450" rx="12" ry="6" fill="#33251C"/>'+
+    '<path d="M162 316 q26 -10 52 0 l4 58 q-30 10 -60 0 Z" fill="#E8DCC4"/>'+
+    '<path d="M162 316 q26 -10 52 0 l-6 26 q-20 -8 -40 0 Z" fill="#C0392B"/>'+
+    '<path d="M208 340 q10 30 4 64" fill="none" stroke="#E8DCC4" stroke-width="10" stroke-linecap="round"/>'+
+    '<path d="M166 328 q-14 -18 -6 -40" fill="none" stroke="#E8DCC4" stroke-width="13" stroke-linecap="round"/>'+
+    '<rect x="128" y="268" width="32" height="22" rx="3" fill="#2E2724"/>'+
+    '<circle cx="144" cy="279" r="8" fill="#4A4F57"/><circle cx="144" cy="279" r="4.5" fill="#8FA5B8"/>'+
+    '<rect x="152" y="264" width="7" height="7" fill="#2E2724"/>'+
+    '<circle cx="190" cy="298" r="21" fill="#C99A72"/>'+
+    '<path d="M164 292 q26 -30 52 0 l4 -8 q-30 -26 -60 0 Z" fill="#D8B472"/>'+
+    '<ellipse cx="190" cy="280" rx="38" ry="10" fill="#D8B472"/>'+
+    '<circle cx="204" cy="298" r="2.8" fill="#2E2119"/>'+
+    '<path d="M198 306 q8 4 14 -1" fill="none" stroke="#8A5A44" stroke-width="2.5" stroke-linecap="round"/>';
+
+  var CAST = [
+    { id:'woman',   art:WOMAN_ART,   ask:{es:'¿Qué hora es?',en:'EXCUSE ME — DO YOU HAVE THE TIME?'} },
+    { id:'kid',     art:KID_ART,     ask:{es:'¿Oiga, qué hora es?',en:'HEY MISTER, WHAT TIME IS IT?'} },
+    { id:'tourist', art:TOURIST_ART, ask:{es:'Disculpe, ¿qué hora es?',en:'EXCUSE ME, DO YOU KNOW THE TIME?'} }
+  ];
+  var walkerArt = document.getElementById('walkerArt');
+  var currentVisitor = CAST[0];
+  function pickVisitor(){
+    currentVisitor = CAST[Math.floor(Math.random()*CAST.length)];
+    walkerArt.innerHTML = currentVisitor.art;
+  }
 
   var w1=document.getElementById('walkerLine1'), w2=document.getElementById('walkerLine2');
   var b1=document.getElementById('burroLine1'), b2=document.getElementById('burroLine2');
@@ -834,14 +940,18 @@
   /* Once patience is transcendent, sometimes the burro simply leaves —
      and the pouch (with the sighting-glass) leaves with him. */
   var REFUSE_CHANCE = 0.25;
+  var SIGN_CHANCE = 0.4;
+  // the tourist occasionally stops for a selfie mid-reach, camera already raised
+  var SELFIE_CHANCE = 0.5;
+  var SELFIE_AT = 2800;
   var say1=document.getElementById('sayTime'), say2=document.getElementById('sayPart');
 
   function runRefusal(){
-    w1.textContent=ASK.es; w2.textContent=ASK.en;
+    w1.textContent=currentVisitor.ask.es; w2.textContent=currentVisitor.ask.en;
     b1.textContent='¡Se acabó!'; b2.textContent='THAT DOES IT. I QUIT.';
 
     at(60,   function(){ stage.classList.add('walking'); });
-    at(1650, function(){ stage.classList.add('asking'); speakWoman(ASK.es); });
+    at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
     at(2500, function(){ stage.classList.add('grumbling'); bray(3); });
     at(3600, function(){ stage.classList.remove('grumbling'); stage.classList.add('burroGone'); patienceEl.textContent='se fue (he left)'; });
     at(5400, function(){
@@ -862,6 +972,7 @@
 
   function run(){
     if(running) return;
+    wakeUp();
     unlockSpeech();
     primeAudio();
     playMusic();
@@ -870,33 +981,65 @@
     stage.className='stage';
     count++;
     savePatience();
+    pickVisitor();
 
     if(count>4 && Math.random()<REFUSE_CHANCE){ runRefusal(); return; }
 
     var L=LINES[Math.min(count-1,LINES.length-1)];
     var tellJoke = Math.random() < JOKE_CHANCE;
+    var selfie = currentVisitor.id==='tourist' && Math.random() < SELFIE_CHANCE;
+    var showSign = L.p==='transcendent' && !selfie && Math.random() < SIGN_CHANCE;
     var extra = tellJoke ? 2000 : 0;
 
-    w1.textContent=ASK.es; w2.textContent=ASK.en;
+    w1.textContent=currentVisitor.ask.es; w2.textContent=currentVisitor.ask.en;
     b1.textContent=L.es;   b2.textContent=L.en;
 
     at(60,   function(){ stage.classList.add('walking'); });
-    at(1650, function(){ stage.classList.add('asking'); speakWoman(ASK.es); });
+    at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
     at(2500, function(){ stage.classList.add('reaching'); react(Math.min(count,4)); });
+    if(selfie){
+      at(SELFIE_AT,     function(){ stage.classList.add('selfie','flash'); react(1); });
+      at(SELFIE_AT+120, function(){ stage.classList.remove('flash'); stage.classList.add('flashFade'); });
+    }
     at(3100, function(){ stage.classList.add('sighting'); stopMusicSoon(6000); });
     at(3700, function(){ stage.classList.add('telling'); speakTime(); });
-    at(4200, function(){ stage.classList.add('grumbling'); patienceEl.textContent=L.p; });
+    at(4200, function(){
+      stage.classList.add('grumbling'); patienceEl.textContent=L.p;
+      if(showSign) stage.classList.add('showSign');
+    });
     if(tellJoke){
       // an aside about the burro's stress, in Don Aurelio's own bubble —
       // after the live time reading, before it reverts to the digital clock
       at(4900, function(){ sayOverride=true; say1.textContent=JOKE.es; say2.textContent=JOKE.en; speakPhrase(JOKE.es); });
     }
     at(5600+extra, function(){ w1.textContent=THANKS.es; w2.textContent=THANKS.en; });
-    at(6800+extra, function(){ stage.classList.remove('reaching','sighting','telling','grumbling','asking'); sayOverride=false; });
+    at(6800+extra, function(){ stage.classList.remove('reaching','sighting','telling','grumbling','asking','showSign','selfie','flash','flashFade'); sayOverride=false; });
     at(7300+extra, endScene);
   }
 
   askBtn.addEventListener('click',run);
+
+  /* ---------- idle dozing ----------
+     If nobody's asked in a while, the burro's eyes droop and he daydreams. */
+  var IDLE_MS = 35000;
+  var idleTimer = null;
+  var dozing = false;
+  function startDozing(){
+    if(running) return;
+    dozing = true;
+    stage.classList.add('dozing');
+  }
+  function wakeUp(){
+    dozing = false;
+    stage.classList.remove('dozing');
+  }
+  function scheduleIdle(){
+    wakeUp();
+    if(idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(startDozing, IDLE_MS);
+  }
+  document.addEventListener('pointerdown', scheduleIdle);
+  scheduleIdle();
 
   var bench={grumble:grumble,snort:snort,sigh:sigh,
              bray1:function(){bray(1);}, bray3:function(){bray(3);},

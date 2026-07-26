@@ -467,13 +467,23 @@
     pickSpanishVoice();
     speechSynthesis.onvoiceschanged = pickSpanishVoice;
   }
+  // Brave's Shields apply fingerprinting-resistance ("farbling") to the
+  // SpeechSynthesis API that can silently mangle pronunciation regardless of
+  // the voice/lang requested — feature-detected via Brave's own documented
+  // navigator.brave.isBrave() API, since Brave's user agent otherwise
+  // disguises itself as plain Chrome.
+  var isBraveBrowser = false;
+  if(navigator.brave && navigator.brave.isBrave){
+    navigator.brave.isBrave().then(function(v){ isBraveBrowser = !!v; }).catch(function(){});
+  }
+
   var speaking = false;
   var speechUnlocked = false;
   function unlockSpeech(){
     // Safari/iOS only allow speak() when it's a direct result of a user
     // gesture — priming it here (inside the click handler) unlocks it for
     // the later speakTime() call that fires from a setTimeout.
-    if(speechUnlocked || !window.speechSynthesis) return;
+    if(speechUnlocked || isBraveBrowser || !window.speechSynthesis) return;
     speechUnlocked = true;
     try{
       var warm = new SpeechSynthesisUtterance(' ');
@@ -482,7 +492,7 @@
     }catch(e){}
   }
   function speakUtterance(text, voice, rate, pitch, onEnd){
-    if(muted || !window.speechSynthesis) return;
+    if(muted || isBraveBrowser || !window.speechSynthesis) return;
     function doSpeak(){
       try{
         var u = new SpeechSynthesisUtterance(text);

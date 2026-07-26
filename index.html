@@ -339,8 +339,9 @@
   <footer>
     The tower clock shows your device's local time. Every bray, snort, grumble and sigh here is drawn from real
     donkey audio recordings (not synthesized) in <code>/audio</code>, reshaped with speed, trim and volume for
-    each reaction. A mariachi recording loops quietly in the background and ducks whenever the burro has something
-    to say. Ask repeatedly at your own risk.
+    each reaction. Don Aurelio speaks the time aloud in Spanish (via your browser's voice) each time he's asked.
+    A mariachi recording loops quietly in the background and ducks whenever there's something to hear over it.
+    Ask repeatedly at your own risk.
   </footer>
 </div>
 
@@ -375,6 +376,59 @@
     if(h<12) return 'DE LA MAÑANA';
     if(h<20) return 'DE LA TARDE';
     return 'DE LA NOCHE';
+  }
+  function partOfDaySpanish(h){
+    if(h<6) return 'de la madrugada';
+    if(h<12) return 'de la mañana';
+    if(h<20) return 'de la tarde';
+    return 'de la noche';
+  }
+
+  /* ---------- spoken Spanish time, via the browser's built-in speech voice ---------- */
+  var NUM_WORDS = ['','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez',
+    'once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve','veinte',
+    'veintiuno','veintidós','veintitrés','veinticuatro','veinticinco','veintiséis','veintisiete','veintiocho','veintinueve'];
+  var HOUR_WORDS = ['','una','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce'];
+
+  function spanishTimePhrase(h24, m){
+    var h12 = h24 % 12; if(h12===0) h12=12;
+    var next = (h12 % 12) + 1;
+    function say(h){ return h===1 ? 'Es la una' : 'Son las ' + HOUR_WORDS[h]; }
+    var phrase;
+    if(m === 0)       phrase = say(h12) + ' en punto';
+    else if(m === 15) phrase = say(h12) + ' y cuarto';
+    else if(m === 30) phrase = say(h12) + ' y media';
+    else if(m === 45) phrase = say(next) + ' menos cuarto';
+    else if(m < 30)   phrase = say(h12) + ' y ' + NUM_WORDS[m];
+    else              phrase = say(next) + ' menos ' + NUM_WORDS[60-m];
+    return phrase + ' ' + partOfDaySpanish(h24);
+  }
+
+  var spanishVoice = null;
+  function pickSpanishVoice(){
+    if(!window.speechSynthesis) return;
+    var voices = speechSynthesis.getVoices();
+    spanishVoice = voices.find(function(v){ return /^es/i.test(v.lang); }) || null;
+  }
+  if(window.speechSynthesis){
+    pickSpanishVoice();
+    speechSynthesis.onvoiceschanged = pickSpanishVoice;
+  }
+  var speaking = false;
+  function speakTime(){
+    if(muted || !window.speechSynthesis) return;
+    var d = new Date();
+    try{
+      speechSynthesis.cancel(); // don't stack utterances if asked again quickly
+      var u = new SpeechSynthesisUtterance(spanishTimePhrase(d.getHours(), d.getMinutes()));
+      u.lang = spanishVoice ? spanishVoice.lang : 'es-ES';
+      if(spanishVoice) u.voice = spanishVoice;
+      u.rate = 0.95;
+      u.pitch = 0.95;
+      u.onstart = function(){ speaking = true; };
+      u.onend = u.onerror = function(){ speaking = false; };
+      speechSynthesis.speak(u);
+    }catch(e){}
   }
   function tick(){
     var d=new Date(), h=d.getHours(), m=d.getMinutes(), s=d.getSeconds();
@@ -493,7 +547,7 @@
   function duckMusic(ms){ duckUntil = Math.max(duckUntil, Date.now() + ms); }
   setInterval(function(){
     if(musicFailed) return;
-    var target = musicMuted ? 0 : (Date.now() < duckUntil ? MUSIC_DUCK_VOL : MUSIC_BASE_VOL);
+    var target = musicMuted ? 0 : ((speaking || Date.now() < duckUntil) ? MUSIC_DUCK_VOL : MUSIC_BASE_VOL);
     var diff = target - music.volume;
     if(Math.abs(diff) < 0.005){ music.volume = target; return; }
     music.volume = Math.max(0, Math.min(1, music.volume + diff * 0.15));
@@ -578,7 +632,7 @@
     at(1650, function(){ stage.classList.add('asking'); });
     at(2500, function(){ stage.classList.add('reaching'); react(Math.min(count,4)); });
     at(3100, function(){ stage.classList.add('sighting'); });
-    at(3700, function(){ stage.classList.add('telling'); });
+    at(3700, function(){ stage.classList.add('telling'); speakTime(); });
     at(4200, function(){ stage.classList.add('grumbling'); patienceEl.textContent=L.p; });
     at(5600, function(){ w1.textContent=THANKS.es; w2.textContent=THANKS.en; });
     at(6800, function(){ stage.classList.remove('reaching','sighting','telling','grumbling','asking'); });

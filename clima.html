@@ -59,30 +59,33 @@
   button:focus-visible{outline:3px solid #fff;outline-offset:3px}
   button[disabled]{opacity:.35;cursor:default;filter:none}
 
-  .patience{margin-top:14px;text-align:center;font-family:ui-monospace,Menlo,monospace;
-    font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.6}
-  .patience b{color:var(--brass);font-weight:400}
-
-  .streak{margin-top:6px;text-align:center;font-family:ui-monospace,Menlo,monospace;
-    font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.6}
-  .streak b{color:var(--brass);font-weight:400}
+  .status{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;
+    font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.16em;
+    text-transform:uppercase;opacity:.75}
+  .status b{color:var(--brass);font-weight:400}
+  .status .sep{opacity:.4}
 
   .shareRow{margin-top:14px;text-align:center;opacity:0;max-height:0;overflow:hidden;
     transition:opacity .4s ease}
   .shareRow.show{opacity:1;max-height:60px}
 
-  .bench{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:14px}
-  .benchlbl{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.2em;
-    text-transform:uppercase;opacity:.45;width:100%;text-align:center}
+  .benchBox{margin-top:14px;text-align:center}
+  .benchBox summary{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.2em;
+    text-transform:uppercase;opacity:.55;cursor:pointer;list-style:none;display:inline-block;
+    padding:6px 10px}
+  .benchBox summary::-webkit-details-marker{display:none}
+  .benchBox summary::after{content:' \25B8';opacity:.7}
+  .benchBox[open] summary::after{content:' \25BE'}
+  .bench{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:10px}
   button.tiny{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.1em;
-    padding:7px 13px;background:transparent;color:var(--brass);border-color:rgba(233,196,106,.45)}
+    padding:10px 14px;background:transparent;color:var(--brass);border-color:rgba(233,196,106,.45)}
 
   .soundnote{margin-top:8px;text-align:center;font-family:ui-monospace,Menlo,monospace;
     font-size:10px;letter-spacing:.08em;color:#E48B6B;opacity:0;max-width:56ch;
     margin-left:auto;margin-right:auto;line-height:1.6}
   .soundnote.show{opacity:.85}
 
-  footer{margin-top:20px;text-align:center;font-size:12px;line-height:1.7;opacity:.5;max-width:58ch}
+  footer{margin-top:20px;text-align:center;font-size:12px;line-height:1.7;opacity:.65;max-width:58ch}
   footer a{color:var(--brass);opacity:.9}
 
   /* animated pieces */
@@ -374,24 +377,29 @@
     <button id="music" class="ghost" aria-pressed="true">Con música</button>
   </div>
 
-  <div class="patience">Pronósticos de hoy — burro's patience: <b id="patience">intact</b></div>
-  <div class="streak">Racha de visitas: <b id="streak">—</b></div>
-
-  <div class="shareRow" id="shareRow">
-    <button id="shareBtn" class="ghost tiny">Compartir el clima de hoy →</button>
+  <div class="status" aria-live="polite">
+    <span>Paciencia del burro hoy: <b id="patience">intacta</b></span>
+    <span class="sep">&middot;</span>
+    <span>Racha de visitas: <b id="streak">primera visita</b></span>
   </div>
 
-  <div class="bench">
-    <span class="benchlbl">Audition a reaction</span>
+  <div class="shareRow" id="shareRow">
+    <button id="shareBtn" class="ghost tiny">Compartir el clima de hoy</button>
+  </div>
+
+  <details class="benchBox">
+    <summary>Pruebe una reacción</summary>
+    <div class="bench">
     <button class="tiny" data-snd="grumble">gruñido</button>
     <button class="tiny" data-snd="snort">resoplido</button>
     <button class="tiny" data-snd="bray1">rebuzno sencillo</button>
     <button class="tiny" data-snd="bray3">rebuzno completo</button>
     <button class="tiny" data-snd="creak">solo la cola</button>
     <button class="tiny" data-snd="sigh">suspiro</button>
-  </div>
+    </div>
+  </details>
 
-  <p class="soundnote" id="soundnote">A recording didn't load — the burro is performing in mime today.</p>
+  <p class="soundnote" id="soundnote">No cargó una grabación — hoy el burro actúa de mimo. (AUDIO FAILED TO LOAD.)</p>
 
   <footer>¿La hora? Pregunte en <a href="./">El Reloj</a> →</footer>
 </div>
@@ -768,6 +776,9 @@
     {es:'¡Ya basta, Aurelio!', en:'THAT IS ENOUGH, AURELIO!',      p:'gone'},
     {es:'Ya ni me molesto.',   en:'I DO NOT EVEN FLINCH ANYMORE.', p:'transcendent'}
   ];
+  // L.p above stays an internal English key (compared elsewhere via ===);
+  // this is only the Spanish label shown in the status line
+  var PATIENCE_LABELS = {intact:'intacta', fraying:'deteriorándose', gone:'agotada', transcendent:'trascendental'};
   var THANKS={es:'Gracias, don Aurelio.',en:'THANK YOU — AND SORRY, BURRO.'};
   var ASIDE_CHANCE = 0.3;
 
@@ -1018,7 +1029,7 @@
     try{ localStorage.setItem(PATIENCE_KEY, JSON.stringify({count:count, ts:Date.now()})); }catch(e){}
   }
   if(count>0){
-    patienceEl.textContent = LINES[Math.min(count-1,LINES.length-1)].p;
+    patienceEl.textContent = PATIENCE_LABELS[LINES[Math.min(count-1,LINES.length-1)].p];
     askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Manda a alguien más';
   }
 
@@ -1029,7 +1040,7 @@
   var STREAK_KEY = 'burro-streak';
   var streak = 0;
   function dateKey(d){ return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
-  function streakLabel(n){ return n>0 ? (n+(n===1?' día':' días')) : '—'; }
+  function streakLabel(n){ return n>0 ? (n+(n===1?' día':' días')) : 'primera visita'; }
   try{
     var savedStreak = JSON.parse(localStorage.getItem(STREAK_KEY)||'null');
     if(savedStreak) streak = savedStreak.streak|0;
@@ -1251,7 +1262,7 @@
         speakForecast(entry, tempC, real, tellAside ? tellAsideAfterForecast(entry) : undefined);
       });
       at(d+1700, function(){
-        stage.classList.add('grumbling'); patienceEl.textContent=L.p;
+        stage.classList.add('grumbling'); patienceEl.textContent=PATIENCE_LABELS[L.p];
         if(showSign) stage.classList.add('showSign');
       });
       if(!tellAside){

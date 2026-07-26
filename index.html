@@ -48,14 +48,12 @@
   /* the timer note's own card — plain HTML instead of fixed-width SVG text,
      so an arbitrarily long user-typed note always wraps and stays fully
      visible instead of overflowing the little speech-bubble text element */
-  .noteCard{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+  .noteCard{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
     max-width:min(560px,86%);background:#EFE3D2;border-radius:10px;
     padding:10px 18px;text-align:center;opacity:0;pointer-events:none;
     transition:opacity .4s ease;box-shadow:0 6px 18px rgba(0,0,0,.35)}
   .noteCard.show{opacity:1}
-  .noteEs{font-family:Georgia,serif;font-size:18px;color:#2A1B33;overflow-wrap:break-word}
-  .noteEn{font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:1.2px;
-    color:#6B5A47;margin-top:4px;overflow-wrap:break-word}
+  .noteEs{font-family:Georgia,serif;font-size:clamp(14px,4vw,18px);color:#2A1B33;overflow-wrap:break-word}
 
   .readout{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:baseline;justify-content:center;
     margin-top:16px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
@@ -72,41 +70,49 @@
   button:focus-visible{outline:3px solid #fff;outline-offset:3px}
   button[disabled]{opacity:.35;cursor:default;filter:none}
 
-  .patience{margin-top:14px;text-align:center;font-family:ui-monospace,Menlo,monospace;
-    font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.6}
-  .patience b{color:var(--brass);font-weight:400}
-
-  .streak{margin-top:6px;text-align:center;font-family:ui-monospace,Menlo,monospace;
-    font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.6}
-  .streak b{color:var(--brass);font-weight:400}
+  .status{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;
+    font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.16em;
+    text-transform:uppercase;opacity:.75}
+  .status b{color:var(--brass);font-weight:400}
+  .status .sep{opacity:.4}
 
   .shareRow{margin-top:14px;text-align:center;opacity:0;max-height:0;overflow:hidden;
     transition:opacity .4s ease}
   .shareRow.show{opacity:1;max-height:60px}
 
-  .timerRow{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
-    align-items:center;font-size:13px}
+  .timerBox{margin-top:14px;border:1px solid rgba(242,197,124,.28);border-radius:4px;
+    padding:14px 16px;text-align:center}
+  .timerBox .boxLabel{font-family:ui-monospace,Menlo,monospace;font-size:10px;
+    letter-spacing:.24em;text-transform:uppercase;color:var(--brass);opacity:.8;margin-bottom:10px}
+  .timerRow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;font-size:13px}
   .timerRow label{opacity:.7}
   .timerRow input{width:56px;font-family:ui-monospace,Menlo,monospace;font-size:13px;
     padding:6px 8px;border-radius:2px;border:1px solid rgba(233,196,106,.45);
     background:transparent;color:var(--paper);text-align:center}
   .timerRow input[type=text]{width:140px;text-align:left}
-  .timerRow input::-webkit-outer-spin-button,.timerRow input::-webkit-inner-spin-button{opacity:.6}
+  .timerRow input[type=number]{-moz-appearance:textfield}
+  .timerRow input[type=number]::-webkit-outer-spin-button,
+  .timerRow input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   #timerCountdown{min-width:3.5em;display:inline-block;font-family:ui-monospace,Menlo,monospace;
     color:var(--brass)}
 
-  .bench{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:14px}
-  .benchlbl{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.2em;
-    text-transform:uppercase;opacity:.45;width:100%;text-align:center}
+  .benchBox{margin-top:14px;text-align:center}
+  .benchBox summary{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.2em;
+    text-transform:uppercase;opacity:.55;cursor:pointer;list-style:none;display:inline-block;
+    padding:6px 10px}
+  .benchBox summary::-webkit-details-marker{display:none}
+  .benchBox summary::after{content:' \25B8';opacity:.7}
+  .benchBox[open] summary::after{content:' \25BE'}
+  .bench{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:10px}
   button.tiny{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.1em;
-    padding:7px 13px;background:transparent;color:var(--brass);border-color:rgba(233,196,106,.45)}
+    padding:10px 14px;background:transparent;color:var(--brass);border-color:rgba(233,196,106,.45)}
 
   .soundnote{margin-top:8px;text-align:center;font-family:ui-monospace,Menlo,monospace;
     font-size:10px;letter-spacing:.08em;color:#E48B6B;opacity:0;max-width:56ch;
     margin-left:auto;margin-right:auto;line-height:1.6}
   .soundnote.show{opacity:.85}
 
-  footer{margin-top:20px;text-align:center;font-size:12px;line-height:1.7;opacity:.5;max-width:58ch}
+  footer{margin-top:20px;text-align:center;font-size:12px;line-height:1.7;opacity:.65;max-width:58ch}
   footer a{color:var(--brass);opacity:.9}
 
   /* animated pieces */
@@ -406,14 +412,13 @@
         </g>
       </g>
     </svg>
-    <div id="noteCard" class="noteCard">
+    <div id="noteCard" class="noteCard" aria-live="polite">
       <div class="noteEs" id="noteEs"></div>
-      <div class="noteEn" id="noteEn"></div>
     </div>
   </div>
 
   <div class="readout">
-    <span class="lbl">Local time</span>
+    <span class="lbl">Hora local</span>
     <span class="big" id="digital">--:--:--</span>
     <span class="lbl" id="zone">&#160;</span>
   </div>
@@ -424,34 +429,42 @@
     <button id="music" class="ghost" aria-pressed="true">Con música</button>
   </div>
 
-  <div class="patience">Burro's patience today: <b id="patience">intact</b></div>
-  <div class="streak">Racha de visitas: <b id="streak">—</b></div>
+  <div class="status" aria-live="polite">
+    <span>Paciencia del burro hoy: <b id="patience">intacta</b></span>
+    <span class="sep">&middot;</span>
+    <span>Racha de visitas: <b id="streak">primera visita</b></span>
+  </div>
 
   <div class="shareRow" id="shareRow">
-    <button id="shareBtn" class="ghost tiny">Compartir el burro de hoy →</button>
+    <button id="shareBtn" class="ghost tiny">Compartir el burro de hoy</button>
   </div>
 
-  <div class="timerRow">
-    <label for="timerMinutes">Avísame en</label>
-    <input type="number" id="timerMinutes" min="1" max="180" value="20"> min
-    <label for="timerNote">¿para qué?</label>
-    <input type="text" id="timerNote" maxlength="60" placeholder="el té (opcional)">
-    <button id="timerSet" class="ghost tiny">Poner aviso</button>
-    <button id="timerCancel" class="ghost tiny" hidden>Cancelar</button>
-    <span id="timerCountdown"></span>
+  <div class="timerBox">
+    <div class="boxLabel">Aviso</div>
+    <div class="timerRow">
+      <label for="timerMinutes">Avísame en</label>
+      <input type="number" id="timerMinutes" min="1" max="180" value="20" title="Entre 1 y 180 minutos" aria-label="Minutos, entre 1 y 180"> min
+      <label for="timerNote">¿para qué?</label>
+      <input type="text" id="timerNote" maxlength="60" placeholder="el té (opcional)">
+      <button id="timerSet" class="ghost tiny">Poner aviso</button>
+      <button id="timerCancel" class="ghost tiny" hidden>Cancelar</button>
+      <span id="timerCountdown"></span>
+    </div>
   </div>
 
-  <div class="bench">
-    <span class="benchlbl">Audition a reaction</span>
+  <details class="benchBox">
+    <summary>Pruebe una reacción</summary>
+    <div class="bench">
     <button class="tiny" data-snd="grumble">gruñido</button>
     <button class="tiny" data-snd="snort">resoplido</button>
     <button class="tiny" data-snd="bray1">rebuzno sencillo</button>
     <button class="tiny" data-snd="bray3">rebuzno completo</button>
     <button class="tiny" data-snd="creak">solo la cola</button>
     <button class="tiny" data-snd="sigh">suspiro</button>
-  </div>
+    </div>
+  </details>
 
-  <p class="soundnote" id="soundnote">A recording didn't load — the burro is performing in mime today.</p>
+  <p class="soundnote" id="soundnote">No cargó una grabación — hoy el burro actúa de mimo. (AUDIO FAILED TO LOAD.)</p>
 
   <footer>¿El clima? El burro lo sabe — pregunte en <a href="clima.html">El Clima</a> →</footer>
 </div>
@@ -474,7 +487,6 @@
   var timerCountdownEl = document.getElementById('timerCountdown');
   var noteCard = document.getElementById('noteCard');
   var noteEs = document.getElementById('noteEs');
-  var noteEn = document.getElementById('noteEn');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- clock ---------- */
@@ -902,6 +914,9 @@
     {es:'¡Ya basta, Aurelio!', en:'THAT IS ENOUGH, AURELIO!',      p:'gone'},
     {es:'Ya ni me molesto.',   en:'I DO NOT EVEN FLINCH ANYMORE.', p:'transcendent'}
   ];
+  // L.p above stays an internal English key (compared elsewhere via ===);
+  // this is only the Spanish label shown in the status line
+  var PATIENCE_LABELS = {intact:'intacta', fraying:'deteriorándose', gone:'agotada', transcendent:'trascendental'};
   var THANKS={es:'Gracias, don Aurelio.',en:'THANK YOU — AND SORRY, BURRO.'};
   var JOKE={es:'El burro ya debería estar de baja por estrés.',en:'THAT BURRO SHOULD BE ON STRESS LEAVE BY NOW.'};
   var JOKE_CHANCE = 0.3;
@@ -1019,7 +1034,7 @@
     try{ localStorage.setItem(PATIENCE_KEY, JSON.stringify({count:count, ts:Date.now()})); }catch(e){}
   }
   if(count>0){
-    patienceEl.textContent = LINES[Math.min(count-1,LINES.length-1)].p;
+    patienceEl.textContent = PATIENCE_LABELS[LINES[Math.min(count-1,LINES.length-1)].p];
     askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Manda a alguien más';
   }
 
@@ -1030,7 +1045,7 @@
   var STREAK_KEY = 'burro-streak';
   var streak = 0;
   function dateKey(d){ return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
-  function streakLabel(n){ return n>0 ? (n+(n===1?' día':' días')) : '—'; }
+  function streakLabel(n){ return n>0 ? (n+(n===1?' día':' días')) : 'primera visita'; }
   try{
     var savedStreak = JSON.parse(localStorage.getItem(STREAK_KEY)||'null');
     if(savedStreak) streak = savedStreak.streak|0;
@@ -1074,13 +1089,14 @@
     tickTimer();
     timerHandle = setInterval(tickTimer, 500);
   }
+  function setTitle(t){ if(document.title !== t) document.title = t; } // avoid rewriting on every 500ms tick when the label hasn't changed
   function cancelTimer(){
     if(timerHandle) clearInterval(timerHandle);
     timerHandle = null; timerEndAt = null; timerMinutes = null; timerNote = '';
     saveTimer();
     timerCountdownEl.textContent = '';
     timerSetBtn.hidden = false; timerCancelBtn.hidden = true;
-    document.title = 'El Reloj';
+    setTitle('El Reloj');
   }
   function tickTimer(){
     var remaining = timerEndAt - Date.now();
@@ -1090,14 +1106,14 @@
       timerEndAt = null; timerMinutes = null; timerNote = ''; saveTimer();
       timerSetBtn.hidden = false; timerCancelBtn.hidden = true;
       timerCountdownEl.textContent = '';
-      document.title = 'El Reloj';
+      setTitle('El Reloj');
       runTimerReveal(minutes, note);
       return;
     }
     var m = Math.floor(remaining/60000), s = Math.floor((remaining%60000)/1000);
     var label = m+':'+(s<10?'0':'')+s;
     timerCountdownEl.textContent = label;
-    document.title = '('+label+') El Reloj';
+    setTitle('('+label+') El Reloj');
   }
   timerSetBtn.addEventListener('click', function(){
     var v = Math.max(1, Math.min(180, parseInt(timerMinutesInput.value,10)||20));
@@ -1295,7 +1311,6 @@
       say2.textContent = line.note ? line.bubbleEn : line.en;
       if(line.note){
         noteEs.textContent = line.note;
-        noteEn.textContent = line.note.toUpperCase();
         noteCard.classList.add('show');
       }
       var shownAt = Date.now();
@@ -1325,7 +1340,7 @@
       speakTime(tellJoke ? tellJokeAfterTime : undefined);
     });
     at(4200, function(){
-      stage.classList.add('grumbling'); patienceEl.textContent=L.p;
+      stage.classList.add('grumbling'); patienceEl.textContent=PATIENCE_LABELS[L.p];
       if(showSign) stage.classList.add('showSign');
     });
     if(!tellJoke){

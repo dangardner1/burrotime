@@ -88,10 +88,11 @@
   #earFar{transform-origin:345px 126px}
   #burroRig{transform-origin:430px 320px;transition:transform 2.2s cubic-bezier(.55,0,.75,.6)}
   .burroGone #burroRig{transform:translateX(-640px)}
-  #beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker{opacity:0;transition:opacity .4s ease}
+  #beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#thoughtBubble{opacity:0;transition:opacity .4s ease}
   #magnifier{transform-origin:790px 106px;transform:scale(.6);
     transition:opacity .4s ease,transform .5s cubic-bezier(.34,1.5,.5,1)}
   #burroEye{transition:transform .4s ease}
+  #burroEyelid{transition:opacity .8s ease}
 
   .walking #walker{transform:translateX(0)}
   .asking  #bubbleWalker{opacity:1}
@@ -104,14 +105,18 @@
   .sighting #burroEye{transform:translateX(-4px)}
   .telling #bubbleMan{opacity:1}
   .grumbling #bubbleBurro{opacity:1}
+  .dozing #burroEyelid{opacity:1}
+  .dozing #thoughtBubble{opacity:1;animation:dozeFade 4s ease-in-out infinite}
 
   #beamCore{stroke-dasharray:7 9;animation:march 1.1s linear infinite}
   @keyframes march{to{stroke-dashoffset:-32}}
+  @keyframes dozeFade{0%,100%{opacity:.2}50%{opacity:1}}
 
   @media (prefers-reduced-motion:reduce){
-    #walker,#pouch,#arm,#torso,#tail,#beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#burroEye,#burroRig
+    #walker,#pouch,#arm,#torso,#tail,#beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#burroEye,#burroRig,#burroEyelid,#thoughtBubble
       {transition-duration:.01ms}
     #beamCore{animation:none}
+    .dozing #thoughtBubble{animation:none}
   }
 </style>
 </head>
@@ -229,6 +234,7 @@
         <g id="earFar"><ellipse cx="345" cy="104" rx="9" ry="26" fill="#8E8078" transform="rotate(4 345 104)"/></g>
         <path d="M318 106 q22 26 34 60" fill="none" stroke="#5A4F49" stroke-width="10" stroke-linecap="round"/>
         <g id="burroEye"><circle cx="306" cy="128" r="4.6" fill="#2E2724"/><circle cx="307.4" cy="126.6" r="1.4" fill="#EDE2D4"/></g>
+        <ellipse id="burroEyelid" cx="306" cy="128" rx="7.5" ry="5" fill="#96887F" opacity="0"/>
         <rect x="348" y="296" width="19" height="88" rx="8" fill="#8E8078"/>
         <rect x="348" y="366" width="19" height="18" rx="4" fill="#4A423E"/>
         <rect x="545" y="296" width="19" height="88" rx="8" fill="#8E8078"/>
@@ -336,6 +342,18 @@
         <path d="M352 76 l-8 18 l26 -18 Z" fill="#EFE3D2"/>
         <text id="burroLine1" x="436" y="48" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="17" fill="#2A1B33">…</text>
         <text id="burroLine2" x="436" y="66" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6B5A47" letter-spacing="1.2">&#160;</text>
+      </g>
+
+      <!-- daydream, shown only when nobody's asked in a while -->
+      <g id="thoughtBubble">
+        <circle cx="360" cy="86" r="10" fill="#EFE3D2"/>
+        <circle cx="342" cy="102" r="6" fill="#EFE3D2"/>
+        <circle cx="330" cy="114" r="3.4" fill="#EFE3D2"/>
+        <ellipse cx="420" cy="48" rx="90" ry="36" fill="#EFE3D2"/>
+        <path d="M420 30 l0 -12" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
+        <path d="M420 30 l-7 -9" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
+        <path d="M420 30 l7 -9" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
+        <path d="M409 30 Q420 24 431 30 L424 63 Q420 69 416 63 Z" fill="#E08B3E"/>
       </g>
     </svg>
   </div>
@@ -862,6 +880,7 @@
 
   function run(){
     if(running) return;
+    wakeUp();
     unlockSpeech();
     primeAudio();
     playMusic();
@@ -897,6 +916,28 @@
   }
 
   askBtn.addEventListener('click',run);
+
+  /* ---------- idle dozing ----------
+     If nobody's asked in a while, the burro's eyes droop and he daydreams. */
+  var IDLE_MS = 35000;
+  var idleTimer = null;
+  var dozing = false;
+  function startDozing(){
+    if(running) return;
+    dozing = true;
+    stage.classList.add('dozing');
+  }
+  function wakeUp(){
+    dozing = false;
+    stage.classList.remove('dozing');
+  }
+  function scheduleIdle(){
+    wakeUp();
+    if(idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(startDozing, IDLE_MS);
+  }
+  document.addEventListener('pointerdown', scheduleIdle);
+  scheduleIdle();
 
   var bench={grumble:grumble,snort:snort,sigh:sigh,
              bray1:function(){bray(1);}, bray3:function(){bray(3);},

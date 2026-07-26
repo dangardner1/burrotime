@@ -64,6 +64,14 @@
     font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.6}
   .patience b{color:var(--brass);font-weight:400}
 
+  .streak{margin-top:6px;text-align:center;font-family:ui-monospace,Menlo,monospace;
+    font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.6}
+  .streak b{color:var(--brass);font-weight:400}
+
+  .shareRow{margin-top:14px;text-align:center;opacity:0;max-height:0;overflow:hidden;
+    transition:opacity .4s ease}
+  .shareRow.show{opacity:1;max-height:60px}
+
   .bench{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:14px}
   .benchlbl{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.2em;
     text-transform:uppercase;opacity:.45;width:100%;text-align:center}
@@ -390,6 +398,11 @@
   </div>
 
   <div class="patience">Burro's patience today: <b id="patience">intact</b></div>
+  <div class="streak">Racha de visitas: <b id="streak">—</b></div>
+
+  <div class="shareRow" id="shareRow">
+    <button id="shareBtn" class="ghost tiny">Compartir el burro de hoy →</button>
+  </div>
 
   <div class="bench">
     <span class="benchlbl">Audition a reaction</span>
@@ -414,6 +427,9 @@
   var musicBtn = document.getElementById('music');
   var patienceEl = document.getElementById('patience');
   var soundNote = document.getElementById('soundnote');
+  var streakEl = document.getElementById('streak');
+  var shareRow = document.getElementById('shareRow');
+  var shareBtn = document.getElementById('shareBtn');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- clock ---------- */
@@ -935,6 +951,35 @@
     askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Manda a alguien más';
   }
 
+  /* ---------- daily streak ----------
+     Checking in on the burro (on this page or on El Clima, same origin,
+     same localStorage) once a day builds a streak; missing a day resets it.
+     Shared with clima.html via the same STREAK_KEY. */
+  var STREAK_KEY = 'burro-streak';
+  var streak = 0;
+  function dateKey(d){ return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+  function streakLabel(n){ return n>0 ? (n+(n===1?' día':' días')) : '—'; }
+  try{
+    var savedStreak = JSON.parse(localStorage.getItem(STREAK_KEY)||'null');
+    if(savedStreak) streak = savedStreak.streak|0;
+  }catch(e){}
+  streakEl.textContent = streakLabel(streak);
+  function bumpStreak(){
+    var today = dateKey(new Date());
+    try{
+      var saved = JSON.parse(localStorage.getItem(STREAK_KEY)||'null');
+      if(saved && saved.lastDate === today){ streak = saved.streak|0; return; }
+      if(saved){
+        var y = new Date(); y.setDate(y.getDate()-1);
+        streak = (saved.lastDate === dateKey(y)) ? (saved.streak|0)+1 : 1;
+      } else {
+        streak = 1;
+      }
+      localStorage.setItem(STREAK_KEY, JSON.stringify({lastDate:today, streak:streak}));
+    }catch(e){ streak = streak || 1; }
+    streakEl.textContent = streakLabel(streak);
+  }
+
   function at(ms,fn){ timers.push(setTimeout(fn, reduce?Math.min(ms,80):ms)); }
   function clearAll(){ for(var i=0;i<timers.length;i++) clearTimeout(timers[i]); timers=[]; }
 
@@ -943,7 +988,87 @@
     running=false;
     askBtn.disabled=false;
     askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Manda a alguien más';
+    if(lastReveal) shareRow.classList.add('show');
   }
+
+  /* ---------- shareable daily card ----------
+     Renders a square PNG summarizing today's reading (independent of the
+     DOM, so it can't pick up an asides's text that later overwrote the
+     bubble) via Web Share API where available, a download otherwise. */
+  var lastReveal = null; // {es, en} set at the telling beat, read on share
+  function wrapCardText(ctx, text, cx, y, maxWidth, lineHeight){
+    var words = text.split(' '), line = '', lines = [];
+    for(var i=0;i<words.length;i++){
+      var test = line ? line+' '+words[i] : words[i];
+      if(ctx.measureText(test).width > maxWidth && line){ lines.push(line); line = words[i]; }
+      else line = test;
+    }
+    if(line) lines.push(line);
+    var startY = y - (lines.length-1)*lineHeight/2;
+    for(var j=0;j<lines.length;j++) ctx.fillText(lines[j], cx, startY+j*lineHeight);
+  }
+  function buildShareCard(){
+    var W=1080, H=1080;
+    var c = document.createElement('canvas'); c.width=W; c.height=H;
+    var ctx = c.getContext('2d');
+    var grad = ctx.createRadialGradient(W/2,0,0,W/2,0,H*0.9);
+    grad.addColorStop(0,'#5C3A5F'); grad.addColorStop(0.6,'#2A1B33'); grad.addColorStop(1,'#1A1020');
+    ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle = 'rgba(233,196,106,.35)'; ctx.lineWidth = 2;
+    ctx.strokeRect(40,40,W-80,H-80);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#E9C46A';
+    ctx.font = 'italic 62px Georgia, serif';
+    ctx.fillText('El Reloj', W/2, 175);
+
+    ctx.fillStyle = '#EFE3D2'; ctx.globalAlpha = .65;
+    ctx.font = '22px Georgia, serif';
+    var today = new Date();
+    ctx.fillText(today.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'}), W/2, 220);
+    ctx.globalAlpha = 1;
+
+    ctx.font = '150px serif';
+    ctx.fillText('🐴', W/2, 460);
+
+    var reveal = lastReveal || {es:'…', en:''};
+    ctx.fillStyle = '#EFE3D2';
+    ctx.font = 'italic 46px Georgia, serif';
+    wrapCardText(ctx, reveal.es, W/2, 620, W-220, 58);
+
+    ctx.fillStyle = '#E9C46A'; ctx.globalAlpha = .7;
+    ctx.font = '20px ui-monospace, Menlo, monospace';
+    ctx.fillText(reveal.en, W/2, 730);
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#E9C46A';
+    ctx.font = '26px ui-monospace, Menlo, monospace';
+    ctx.fillText(streak>0 ? ('RACHA: '+streak+(streak===1?' DÍA':' DÍAS')) : 'PRIMERA VISITA', W/2, 940);
+
+    ctx.fillStyle = '#EFE3D2'; ctx.globalAlpha = .5;
+    ctx.font = '16px ui-monospace, Menlo, monospace';
+    ctx.fillText('EL BURRO SABE LA HORA — burrotime.vercel.app', W/2, 1000);
+    ctx.globalAlpha = 1;
+
+    return c;
+  }
+  function shareCard(){
+    var canvas = buildShareCard();
+    canvas.toBlob(function(blob){
+      if(!blob) return;
+      var file = new File([blob], 'el-reloj.png', {type:'image/png'});
+      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+        navigator.share({files:[file], title:'El Reloj', text:(lastReveal&&lastReveal.es)||''}).catch(function(){});
+      } else {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = 'el-reloj-'+dateKey(new Date())+'.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+      }
+    }, 'image/png');
+  }
+  shareBtn.addEventListener('click', shareCard);
 
   /* Once patience is transcendent, sometimes the burro simply leaves —
      and the pouch (with the sighting-glass) leaves with him. */
@@ -989,6 +1114,7 @@
     stage.className='stage';
     count++;
     savePatience();
+    bumpStreak();
     pickVisitor();
 
     if(count>4 && Math.random()<REFUSE_CHANCE){ runRefusal(); return; }
@@ -1028,6 +1154,12 @@
     at(3100, function(){ stage.classList.add('sighting'); stopMusicSoon(6000); });
     at(3700, function(){
       stage.classList.add('telling');
+      var now = new Date();
+      var h12 = now.getHours()%12; if(h12===0) h12=12;
+      lastReveal = {
+        es: spanishTimePhrase(now.getHours(), now.getMinutes()),
+        en: h12+':'+pad(now.getMinutes())+' '+(now.getHours()<12?'AM':'PM')
+      };
       speakTime(tellJoke ? tellJokeAfterTime : undefined);
     });
     at(4200, function(){

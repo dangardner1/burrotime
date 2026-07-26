@@ -93,8 +93,6 @@
   .timerRow input[type=number]{-moz-appearance:textfield}
   .timerRow input[type=number]::-webkit-outer-spin-button,
   .timerRow input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-  #timerCountdown{min-width:3.5em;display:inline-block;font-family:ui-monospace,Menlo,monospace;
-    color:var(--brass)}
 
   .benchBox{margin-top:14px;text-align:center}
   .benchBox summary{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.2em;
@@ -421,6 +419,8 @@
     <span class="lbl">Hora local</span>
     <span class="big" id="digital">--:--:--</span>
     <span class="lbl" id="zone">&#160;</span>
+    <span class="lbl" id="timerReadoutLbl" hidden>Aviso</span>
+    <span class="big" id="timerCountdown" hidden>--:--</span>
   </div>
 
   <div class="controls">
@@ -448,7 +448,6 @@
       <input type="text" id="timerNote" maxlength="60" placeholder="el té (opcional)">
       <button id="timerSet" class="ghost tiny">Poner aviso</button>
       <button id="timerCancel" class="ghost tiny" hidden>Cancelar</button>
-      <span id="timerCountdown"></span>
     </div>
   </div>
 
@@ -485,6 +484,7 @@
   var timerSetBtn = document.getElementById('timerSet');
   var timerCancelBtn = document.getElementById('timerCancel');
   var timerCountdownEl = document.getElementById('timerCountdown');
+  var timerReadoutLbl = document.getElementById('timerReadoutLbl');
   var noteCard = document.getElementById('noteCard');
   var noteEs = document.getElementById('noteEs');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1080,12 +1080,19 @@
       else localStorage.removeItem(TIMER_KEY);
     }catch(e){}
   }
+  // the countdown lives in the main readout, styled identically to the
+  // local-time digits — hidden entirely while no timer is armed
+  function showTimerReadout(show){
+    timerReadoutLbl.hidden = !show;
+    timerCountdownEl.hidden = !show;
+  }
   function startTimer(minutes, note){
     timerMinutes = minutes;
     timerNote = note || '';
     timerEndAt = Date.now() + minutes*60000;
     saveTimer();
     timerSetBtn.hidden = true; timerCancelBtn.hidden = false;
+    showTimerReadout(true);
     tickTimer();
     timerHandle = setInterval(tickTimer, 500);
   }
@@ -1095,6 +1102,7 @@
     timerHandle = null; timerEndAt = null; timerMinutes = null; timerNote = '';
     saveTimer();
     timerCountdownEl.textContent = '';
+    showTimerReadout(false);
     timerSetBtn.hidden = false; timerCancelBtn.hidden = true;
     setTitle('El Reloj');
   }
@@ -1106,6 +1114,7 @@
       timerEndAt = null; timerMinutes = null; timerNote = ''; saveTimer();
       timerSetBtn.hidden = false; timerCancelBtn.hidden = true;
       timerCountdownEl.textContent = '';
+      showTimerReadout(false);
       setTitle('El Reloj');
       runTimerReveal(minutes, note);
       return;
@@ -1132,6 +1141,7 @@
       } else {
         timerMinutes = savedTimer.minutes; timerEndAt = savedTimer.endAt; timerNote = savedTimer.note||'';
         timerSetBtn.hidden = true; timerCancelBtn.hidden = false;
+        showTimerReadout(true);
         tickTimer();
         timerHandle = setInterval(tickTimer, 500);
       }

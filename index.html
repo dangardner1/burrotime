@@ -165,7 +165,7 @@
   <header>
     <div class="eyebrow">Plaza de la Merced &middot; est. forever</div>
     <h1>El Reloj</h1>
-    <p class="sub">Don Aurelio has told this village the time for forty-one years. He has never owned a watch. He has, however, always owned a burro — and the burro has opinions.</p>
+    <p class="sub" data-i18n="intro">Don Aurelio has told this village the time for forty-one years. He has never owned a watch. He has, however, always owned a burro — and the burro has opinions.</p>
   </header>
 
   <div class="stage" id="stage">
@@ -502,6 +502,8 @@
   function pri(p){ return lang==='en' ? p.en : p.es; }
   function sub(p){ return lang==='en' ? p.es : p.en; }
   var UI = {
+    intro: {es:'Don Aurelio le ha dado la hora a este pueblo durante cuarenta y un años. Nunca ha tenido un reloj. Sin embargo, siempre ha tenido un burro — y el burro tiene sus opiniones.',
+            en:'Don Aurelio has told this village the time for forty-one years. He has never owned a watch. He has, however, always owned a burro — and the burro has opinions.'},
     lblLocal:  {es:'Hora local', en:'Local time'},
     lblTimer:  {es:'Aviso', en:'Timer'},
     lblPatience:{es:'Paciencia del burro hoy:', en:'Burro’s patience today:'},

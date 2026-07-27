@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>El Reloj — the village timekeeper</title>
+<title>Hora Burra — the village timekeeper</title>
 <meta name="description" content="Don Aurelio has told this village the time for forty-one years. He has never owned a watch. He has, however, always owned a burro — and the burro has opinions.">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#2A1B33">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta property="og:type" content="website">
-<meta property="og:title" content="El Reloj — the village timekeeper">
+<meta property="og:title" content="Hora Burra — the village timekeeper">
 <meta property="og:description" content="Don Aurelio has told this village the time for forty-one years. He has never owned a watch. He has, however, always owned a burro — and the burro has opinions.">
 <meta property="og:url" content="https://burrotime.vercel.app/">
 <meta property="og:image" content="https://burrotime.vercel.app/og.png">
@@ -177,7 +177,7 @@
 
   <header>
     <div class="eyebrow">Plaza de la Merced &middot; est. forever</div>
-    <h1>El Reloj</h1>
+    <h1>Hora Burra</h1>
     <p class="sub" data-i18n="intro">Don Aurelio has told this village the time for forty-one years. He has never owned a watch. He has, however, always owned a burro — and the burro has opinions.</p>
   </header>
 
@@ -1312,7 +1312,7 @@
     timerCountdownEl.textContent = '';
     showTimerReadout(false);
     timerSetBtn.hidden = false; timerCancelBtn.hidden = true;
-    setTitle('El Reloj');
+    setTitle('Hora Burra');
   }
   function tickTimer(){
     var remaining = timerEndAt - Date.now();
@@ -1323,14 +1323,14 @@
       timerSetBtn.hidden = false; timerCancelBtn.hidden = true;
       timerCountdownEl.textContent = '';
       showTimerReadout(false);
-      setTitle('El Reloj');
+      setTitle('Hora Burra');
       runTimerReveal(minutes, note);
       return;
     }
     var m = Math.floor(remaining/60000), s = Math.floor((remaining%60000)/1000);
     var label = m+':'+(s<10?'0':'')+s;
     timerCountdownEl.textContent = label;
-    setTitle('('+label+') El Reloj');
+    setTitle('('+label+') Hora Burra');
   }
   timerSetBtn.addEventListener('click', function(){
     var v = Math.max(1, Math.min(180, parseInt(timerMinutesInput.value,10)||20));
@@ -1428,7 +1428,7 @@
       ctx.textAlign = 'center';
       ctx.fillStyle = '#E9C46A';
       ctx.font = 'italic 62px Georgia, serif';
-      ctx.fillText('El Reloj', W/2, 175);
+      ctx.fillText('Hora Burra', W/2, 175);
 
       ctx.fillStyle = '#EFE3D2'; ctx.globalAlpha = .65;
       ctx.font = '22px Georgia, serif';
@@ -1465,13 +1465,13 @@
     buildShareCard().then(function(canvas){
       canvas.toBlob(function(blob){
         if(!blob) return;
-        var file = new File([blob], 'el-reloj.png', {type:'image/png'});
+        var file = new File([blob], 'hora-burra.png', {type:'image/png'});
         if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-          navigator.share({files:[file], title:'El Reloj', text:(lastReveal&&lastReveal.es)||''}).catch(function(){});
+          navigator.share({files:[file], title:'Hora Burra', text:(lastReveal&&lastReveal.es)||''}).catch(function(){});
         } else {
           var url = URL.createObjectURL(blob);
           var a = document.createElement('a');
-          a.href = url; a.download = 'el-reloj-'+dateKey(new Date())+'.png';
+          a.href = url; a.download = 'hora-burra-'+dateKey(new Date())+'.png';
           document.body.appendChild(a); a.click(); a.remove();
           setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
         }

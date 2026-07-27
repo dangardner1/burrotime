@@ -375,33 +375,34 @@
     <button id="ask">Manda a alguien a preguntar</button>
     <button id="sound" class="ghost" aria-pressed="true">Con sonido</button>
     <button id="music" class="ghost" aria-pressed="true">Con música</button>
+    <button id="lang" class="ghost">English</button>
   </div>
 
   <div class="status" aria-live="polite">
-    <span>Paciencia del burro hoy: <b id="patience">intacta</b></span>
+    <span><span data-i18n="lblPatience">Paciencia del burro hoy:</span> <b id="patience">intacta</b></span>
     <span class="sep">&middot;</span>
-    <span>Racha de visitas: <b id="streak">primera visita</b></span>
+    <span><span data-i18n="lblStreak">Racha de visitas:</span> <b id="streak">primera visita</b></span>
   </div>
 
   <div class="shareRow" id="shareRow">
-    <button id="shareBtn" class="ghost tiny">Compartir el clima de hoy</button>
+    <button id="shareBtn" class="ghost tiny" data-i18n="share">Compartir el clima de hoy</button>
   </div>
 
   <details class="benchBox">
-    <summary>Pruebe una reacción</summary>
+    <summary data-i18n="benchLbl">Pruebe una reacción</summary>
     <div class="bench">
-    <button class="tiny" data-snd="grumble">gruñido</button>
-    <button class="tiny" data-snd="snort">resoplido</button>
-    <button class="tiny" data-snd="bray1">rebuzno sencillo</button>
-    <button class="tiny" data-snd="bray3">rebuzno completo</button>
-    <button class="tiny" data-snd="creak">solo la cola</button>
-    <button class="tiny" data-snd="sigh">suspiro</button>
+    <button class="tiny" data-snd="grumble" data-i18n="snd_grumble">gruñido</button>
+    <button class="tiny" data-snd="snort" data-i18n="snd_snort">resoplido</button>
+    <button class="tiny" data-snd="bray1" data-i18n="snd_bray1">rebuzno sencillo</button>
+    <button class="tiny" data-snd="bray3" data-i18n="snd_bray3">rebuzno completo</button>
+    <button class="tiny" data-snd="creak" data-i18n="snd_creak">solo la cola</button>
+    <button class="tiny" data-snd="sigh" data-i18n="snd_sigh">suspiro</button>
     </div>
   </details>
 
-  <p class="soundnote" id="soundnote">No cargó una grabación — hoy el burro actúa de mimo. (AUDIO FAILED TO LOAD.)</p>
+  <p class="soundnote" id="soundnote" data-i18n="soundnote">No cargó una grabación — hoy el burro actúa de mimo. (AUDIO FAILED TO LOAD.)</p>
 
-  <footer>¿La hora? Pregunte en <a href="./">El Reloj</a> →</footer>
+  <footer><span data-i18n="footerLead">¿La hora? Pregunte en</span> <a href="./">El Reloj</a> →</footer>
 </div>
 
 <script>
@@ -416,6 +417,63 @@
   var shareRow = document.getElementById('shareRow');
   var shareBtn = document.getElementById('shareBtn');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- language toggle ----------
+     Flips which language is primary in every bubble and label. Don
+     Aurelio keeps SPEAKING Spanish in both modes — the toggle governs
+     what you read, not the village's voice. Shared with index.html via
+     the same localStorage key. */
+  var LANG_KEY = 'burro-lang';
+  var lang = 'es';
+  try{ if(localStorage.getItem(LANG_KEY)==='en') lang='en'; }catch(e){}
+  var langBtn = document.getElementById('lang');
+  function pri(p){ return lang==='en' ? p.en : p.es; }
+  function sub(p){ return lang==='en' ? p.es : p.en; }
+  var UI = {
+    lblPatience:{es:'Paciencia del burro hoy:', en:'Burro’s patience today:'},
+    lblStreak: {es:'Racha de visitas:', en:'Visit streak:'},
+    share:     {es:'Compartir el clima de hoy', en:'Share today’s weather'},
+    benchLbl:  {es:'Pruebe una reacción', en:'Audition a reaction'},
+    snd_grumble:{es:'gruñido', en:'grumble'},
+    snd_snort: {es:'resoplido', en:'snort'},
+    snd_bray1: {es:'rebuzno sencillo', en:'simple bray'},
+    snd_bray3: {es:'rebuzno completo', en:'full bray'},
+    snd_creak: {es:'solo la cola', en:'just the tail'},
+    snd_sigh:  {es:'suspiro', en:'sigh'},
+    soundnote: {es:'No cargó una grabación — hoy el burro actúa de mimo. (AUDIO FAILED TO LOAD.)',
+                en:'A recording didn’t load — the burro is miming today. (NO CARGÓ EL AUDIO.)'},
+    footerLead:{es:'¿La hora? Pregunte en', en:'The time? Ask at'}
+  };
+  var ASK_LABELS = {
+    first: {es:'Manda a alguien a preguntar', en:'Send someone to ask'},
+    more:  {es:'Manda a alguien más', en:'Send someone else'},
+    again: {es:'Pregúntale otra vez.', en:'Ask him again.'}
+  };
+  function updateAskBtn(){
+    askBtn.textContent = pri(count===0 ? ASK_LABELS.first : (count>=3 ? ASK_LABELS.again : ASK_LABELS.more));
+  }
+  function updateSoundBtn(){
+    sndBtn.textContent = pri(muted ? {es:'Sin sonido',en:'Sound off'} : {es:'Con sonido',en:'Sound on'});
+  }
+  function updateMusicBtn(){
+    musicBtn.textContent = pri(musicMuted ? {es:'Sin música',en:'Music off'} : {es:'Con música',en:'Music on'});
+  }
+  function applyLang(){
+    document.documentElement.lang = lang;
+    langBtn.textContent = lang==='es' ? 'English' : 'Español'; // shows the language you'd switch TO
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for(var i=0;i<nodes.length;i++){
+      var pair = UI[nodes[i].getAttribute('data-i18n')];
+      if(pair) nodes[i].textContent = pair[lang];
+    }
+    updateAskBtn(); updateSoundBtn(); updateMusicBtn();
+    renderPatience(); renderStreak();
+  }
+  langBtn.addEventListener('click', function(){
+    lang = lang==='es' ? 'en' : 'es';
+    try{ localStorage.setItem(LANG_KEY, lang); }catch(e){}
+    applyLang();
+  });
 
   var spanishVoice = null;
   // The Web Speech API doesn't expose voice gender, so pick by name — these
@@ -663,7 +721,7 @@
 
   sndBtn.addEventListener('click',function(){
     muted=!muted;
-    sndBtn.textContent = muted ? 'Sin sonido' : 'Con sonido';
+    updateSoundBtn();
     sndBtn.setAttribute('aria-pressed', String(!muted));
     if(!muted) primeAudio();
   });
@@ -731,7 +789,7 @@
 
   musicBtn.addEventListener('click',function(){
     musicMuted = !musicMuted;
-    musicBtn.textContent = musicMuted ? 'Sin música' : 'Con música';
+    updateMusicBtn();
     musicBtn.setAttribute('aria-pressed', String(!musicMuted));
     if(!musicMuted) playMusic();
   });
@@ -778,7 +836,16 @@
   ];
   // L.p above stays an internal English key (compared elsewhere via ===);
   // this is only the Spanish label shown in the status line
-  var PATIENCE_LABELS = {intact:'intacta', fraying:'deteriorándose', gone:'agotada', transcendent:'trascendental'};
+  var PATIENCE_LABELS = {
+    intact:      {es:'intacta', en:'intact'},
+    fraying:     {es:'deteriorándose', en:'fraying'},
+    gone:        {es:'agotada', en:'gone'},
+    transcendent:{es:'trascendental', en:'transcendent'},
+    left:        {es:'se fue (he left)', en:'he left (se fue)'}
+  };
+  var patienceKey = 'intact'; // remembered so a language switch can re-render the current value
+  function setPatience(key){ patienceKey = key; renderPatience(); }
+  function renderPatience(){ patienceEl.textContent = pri(PATIENCE_LABELS[patienceKey]); }
   var THANKS={es:'Gracias, don Aurelio.',en:'THANK YOU — AND SORRY, BURRO.'};
   var ASIDE_CHANCE = 0.3;
 
@@ -1029,8 +1096,8 @@
     try{ localStorage.setItem(PATIENCE_KEY, JSON.stringify({count:count, ts:Date.now()})); }catch(e){}
   }
   if(count>0){
-    patienceEl.textContent = PATIENCE_LABELS[LINES[Math.min(count-1,LINES.length-1)].p];
-    askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Manda a alguien más';
+    setPatience(LINES[Math.min(count-1,LINES.length-1)].p);
+    updateAskBtn();
   }
 
   /* ---------- daily streak ----------
@@ -1040,7 +1107,11 @@
   var STREAK_KEY = 'burro-streak';
   var streak = 0;
   function dateKey(d){ return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
-  function streakLabel(n){ return n>0 ? (n+(n===1?' día':' días')) : 'primera visita'; }
+  function streakLabel(n){
+    if(n<=0) return lang==='en' ? 'first visit' : 'primera visita';
+    return n + (lang==='en' ? (n===1?' day':' days') : (n===1?' día':' días'));
+  }
+  function renderStreak(){ streakEl.textContent = streakLabel(streak); }
   try{
     var savedStreak = JSON.parse(localStorage.getItem(STREAK_KEY)||'null');
     if(savedStreak) streak = savedStreak.streak|0;
@@ -1079,7 +1150,7 @@
     stage.classList.remove('walking');
     running=false;
     askBtn.disabled=false;
-    askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Manda a alguien más';
+    updateAskBtn();
     if(lastReveal) shareRow.classList.add('show');
   }
 
@@ -1139,7 +1210,7 @@
       ctx.fillStyle = '#EFE3D2'; ctx.globalAlpha = .65;
       ctx.font = '22px Georgia, serif';
       var today = new Date();
-      ctx.fillText(today.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'}), W/2, 220);
+      ctx.fillText(today.toLocaleDateString(lang==='en'?'en-US':'es-ES', {weekday:'long', day:'numeric', month:'long'}), W/2, 220);
       ctx.globalAlpha = 1;
 
       var pw = 440, ph = pw * (340/560);
@@ -1148,16 +1219,16 @@
       var reveal = lastReveal || {es:'…', en:''};
       ctx.fillStyle = '#EFE3D2';
       ctx.font = 'italic 46px Georgia, serif';
-      wrapCardText(ctx, reveal.es, W/2, 620, W-220, 58);
+      wrapCardText(ctx, pri(reveal), W/2, 620, W-220, 58);
 
       ctx.fillStyle = '#E9C46A'; ctx.globalAlpha = .7;
       ctx.font = '20px ui-monospace, Menlo, monospace';
-      ctx.fillText(reveal.en, W/2, 730);
+      ctx.fillText(sub(reveal), W/2, 730);
       ctx.globalAlpha = 1;
 
       ctx.fillStyle = '#E9C46A';
       ctx.font = '26px ui-monospace, Menlo, monospace';
-      ctx.fillText(streak>0 ? ('RACHA: '+streak+(streak===1?' DÍA':' DÍAS')) : 'PRIMERA VISITA', W/2, 940);
+      ctx.fillText(streakLabel(streak).toUpperCase() + (streak>0 ? (lang==='en'?' STREAK':' DE RACHA') : ''), W/2, 940);
 
       ctx.fillStyle = '#EFE3D2'; ctx.globalAlpha = .5;
       ctx.font = '16px ui-monospace, Menlo, monospace';
@@ -1195,21 +1266,25 @@
   var say1=document.getElementById('sayMain'), say2=document.getElementById('sayDetail');
 
   function runRefusal(){
-    w1.textContent=currentVisitor.ask.es; w2.textContent=currentVisitor.ask.en;
-    b1.textContent='¡No soy un barómetro!'; b2.textContent='I AM NOT A BAROMETER!';
+    var QUIT={es:'¡No soy un barómetro!',en:'I AM NOT A BAROMETER!'};
+    var DUNNO={es:'No sé…',en:'I don’t know…'};
+    var REFUSED={es:'EL BURRO SE NEGÓ A DECIR MÁS',en:'THE BURRO REFUSED TO SAY ANY MORE'};
+    var OH={es:'Vaya.',en:'OH. OKAY THEN.'};
+    w1.textContent=pri(currentVisitor.ask); w2.textContent=sub(currentVisitor.ask);
+    b1.textContent=pri(QUIT); b2.textContent=sub(QUIT);
 
     at(60,   function(){ stage.classList.add('walking'); });
     at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
     at(2500, function(){ stage.classList.add('grumbling'); bray(3); });
-    at(3600, function(){ stage.classList.remove('grumbling'); stage.classList.add('burroGone'); patienceEl.textContent='se fue (he left)'; });
+    at(3600, function(){ stage.classList.remove('grumbling'); stage.classList.add('burroGone'); setPatience('left'); });
     at(5400, function(){
       sayOverride=true;
-      say1.textContent='No sé…';
-      say2.textContent='THE BURRO REFUSED TO SAY ANY MORE';
+      say1.textContent=pri(DUNNO);
+      say2.textContent=sub(REFUSED);
       stage.classList.add('telling');
       speakPhrase('No sé. El burro se negó a decir más.');
     });
-    at(7200, function(){ w1.textContent='Vaya.'; w2.textContent='OH. OKAY THEN.'; });
+    at(7200, function(){ w1.textContent=pri(OH); w2.textContent=sub(OH); });
     at(8400, function(){
       stage.classList.remove('telling','asking');
       sayOverride=false;
@@ -1240,11 +1315,11 @@
     var showSign = L.p==='transcendent' && !selfie && Math.random() < SIGN_CHANCE;
     var revealShownAt = null; // set when the forecast actually appears — it (and any aside after it) holds at least REVEAL_HOLD_MS from here
 
-    w1.textContent=currentVisitor.ask.es; w2.textContent=currentVisitor.ask.en;
-    b1.textContent=L.es;   b2.textContent=L.en;
+    w1.textContent=pri(currentVisitor.ask); w2.textContent=sub(currentVisitor.ask);
+    b1.textContent=pri(L);   b2.textContent=sub(L);
 
     function finishUp(){
-      w1.textContent=THANKS.es; w2.textContent=THANKS.en;
+      w1.textContent=pri(THANKS); w2.textContent=sub(THANKS);
       at(1200, function(){
         stage.classList.remove('reaching','sighting','telling','grumbling','asking','showSign','selfie','flash','flashFade','tailPull');
         sayOverride=false;
@@ -1257,7 +1332,7 @@
     // speaking, so it can never cut the reading off mid-sentence
     function tellAsideAfterForecast(entry){
       return function(){
-        sayOverride=true; say1.textContent=entry.sign.es; say2.textContent=entry.sign.en;
+        sayOverride=true; say1.textContent=pri(entry.sign); say2.textContent=sub(entry.sign);
         speakPhrase(entry.sign.es, function(){ holdSince(revealShownAt, REVEAL_HOLD_MS, finishUp); });
       };
     }
@@ -1292,13 +1367,13 @@
         stage.classList.remove('tailPull');
         stage.classList.add('telling');
         var f = composeForecast(entry, tempC, real);
-        say1.textContent = f.main.es; say2.textContent = f.main.en;
+        say1.textContent = pri(f.main); say2.textContent = sub(f.main);
         lastReveal = f.main;
         revealShownAt = Date.now();
         speakForecast(entry, tempC, real, tellAside ? tellAsideAfterForecast(entry) : function(){ holdSince(revealShownAt, REVEAL_HOLD_MS, finishUp); });
       });
       at(d+1700, function(){
-        stage.classList.add('grumbling'); patienceEl.textContent=PATIENCE_LABELS[L.p];
+        stage.classList.add('grumbling'); setPatience(L.p);
         if(showSign) stage.classList.add('showSign');
       });
     });
@@ -1339,6 +1414,8 @@
       if(f) f();
     });
   }
+
+  applyLang(); // render the saved language once everything above is initialized
 })();
 </script>
 </body>

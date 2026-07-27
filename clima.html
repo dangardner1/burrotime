@@ -134,13 +134,18 @@
   .showSign #protestSign{opacity:1}
   .dozing #burroEyelid{opacity:1}
   .dozing #thoughtBubble{opacity:1;animation:dozeFade 4s ease-in-out infinite}
+  .burroGone #thoughtBubble{opacity:1}
+  #carrotIcon{opacity:1;transition:opacity .3s ease}
+  #thoughtLine1,#thoughtLine2{opacity:0;transition:opacity .3s ease}
+  .burroGone #carrotIcon{opacity:0}
+  .burroGone #thoughtLine1,.burroGone #thoughtLine2{opacity:1}
 
   #beamCore{stroke-dasharray:7 9;animation:march 1.1s linear infinite}
   @keyframes march{to{stroke-dashoffset:-32}}
   @keyframes dozeFade{0%,100%{opacity:.2}50%{opacity:1}}
 
   @media (prefers-reduced-motion:reduce){
-    #walker,#pouch,#arm,#torso,#tail,#beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#burroEye,#burroRig,#burroEyelid,#thoughtBubble,#protestSign,#flash
+    #walker,#pouch,#arm,#torso,#tail,#beam,#magnifier,#bubbleMan,#bubbleBurro,#bubbleWalker,#burroEye,#burroRig,#burroEyelid,#thoughtBubble,#protestSign,#flash,#carrotIcon,#thoughtLine1,#thoughtLine2
       {transition-duration:.01ms}
     #beamCore{animation:none}
     .dozing #thoughtBubble{animation:none}
@@ -363,10 +368,14 @@
         <circle cx="342" cy="102" r="6" fill="#EFE3D2"/>
         <circle cx="330" cy="114" r="3.4" fill="#EFE3D2"/>
         <ellipse cx="420" cy="48" rx="90" ry="36" fill="#EFE3D2"/>
-        <path d="M420 30 l0 -12" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
-        <path d="M420 30 l-7 -9" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
-        <path d="M420 30 l7 -9" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
-        <path d="M409 30 Q420 24 431 30 L424 63 Q420 69 416 63 Z" fill="#E08B3E"/>
+        <g id="carrotIcon">
+          <path d="M420 30 l0 -12" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
+          <path d="M420 30 l-7 -9" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
+          <path d="M420 30 l7 -9" stroke="#4C8C4A" stroke-width="3" stroke-linecap="round"/>
+          <path d="M409 30 Q420 24 431 30 L424 63 Q420 69 416 63 Z" fill="#E08B3E"/>
+        </g>
+        <text id="thoughtLine1" x="420" y="44" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="14" fill="#2A1B33"></text>
+        <text id="thoughtLine2" x="420" y="60" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="7" fill="#6B5A47" letter-spacing="1">&#160;</text>
       </g>
 
       <!-- the burro's silent protest, shown once patience is fully gone -->
@@ -1132,8 +1141,13 @@
   }
   var WALKER_MAXW = 204, BURRO_MAXW = 204; // bubble rect width (228) minus padding
   var MAN_MAXW = 150; // bubble rect width (174) minus padding
+  var THOUGHT_MAXW = 140; // daydream bubble (ellipse rx=90) minus padding
   function setWalkerLines(big, small){ fitBubbleText(w1, big, WALKER_MAXW, 10); fitBubbleText(w2, small, WALKER_MAXW, 7); }
   function setBurroLines(big, small){ fitBubbleText(b1, big, BURRO_MAXW, 10); fitBubbleText(b2, small, BURRO_MAXW, 7); }
+  function setThoughtLines(big, small){
+    fitBubbleText(document.getElementById('thoughtLine1'), big, THOUGHT_MAXW, 9);
+    fitBubbleText(document.getElementById('thoughtLine2'), small, THOUGHT_MAXW, 5);
+  }
   // looked up fresh (rather than closing over say1/say2, declared further
   // below) in case anything ever calls this before that assignment runs
   function setManLines(big, small){
@@ -1150,6 +1164,16 @@
     noteEs.textContent = pri(pair);
     noteCard.classList.add('show');
   }
+
+  // the burro's parting thought as he walks off, done being a barometer —
+  // shown in the daydream bubble (in place of the carrot) once he's gone,
+  // right as the music fades out (see runRefusal)
+  var PARTING_THOUGHTS = [
+    {es:'Al fin, sin pronósticos.', en:'FINALLY, NO MORE FORECASTS.'},
+    {es:'Que alguien más lea las nubes.', en:'LET SOMEONE ELSE READ THE CLOUDS.'},
+    {es:'Nunca quise ser un barómetro.', en:'NEVER WANTED TO BE A BAROMETER.'},
+    {es:'Esto se sentía necesario.', en:'THIS FELT NECESSARY.'}
+  ];
 
   /* ---------- the burro remembers ----------
      Patience persists across visits: six quiet hours and all is forgiven. */
@@ -1344,7 +1368,12 @@
     at(60,   function(){ stage.classList.add('walking'); });
     at(1650, function(){ stage.classList.add('asking'); speakWoman(pri(currentVisitor.ask)); });
     at(2500, function(){ stage.classList.add('grumbling'); bray(3); });
-    at(3600, function(){ stage.classList.remove('grumbling'); stage.classList.add('burroGone'); setPatience('left'); });
+    at(3600, function(){
+      stage.classList.remove('grumbling'); stage.classList.add('burroGone'); setPatience('left');
+      stopMusicSoon(0); // quiet along with him — no music playing under an empty stage
+      var thought = PARTING_THOUGHTS[Math.floor(Math.random()*PARTING_THOUGHTS.length)];
+      setThoughtLines(pri(thought), sub(thought));
+    });
     at(5400, function(){
       sayOverride=true;
       // the full explanation goes in #noteCard — "THE BURRO REFUSED TO SAY

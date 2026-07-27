@@ -153,7 +153,7 @@
   <header>
     <div class="eyebrow">Plaza de la Merced &middot; est. forever</div>
     <h1>El Clima</h1>
-    <p class="sub">Don Aurelio doesn't own a weather vane. He owns a burro, and old farmers know: the ears never lie. Ask him what it's doing outside — wherever you are.</p>
+    <p class="sub" data-i18n="intro">Don Aurelio doesn't own a weather vane. He owns a burro, and old farmers know: the ears never lie. Ask him what it's doing outside — wherever you are.</p>
   </header>
 
   <div class="stage" id="stage">
@@ -445,6 +445,8 @@
   function pri(p){ return lang==='en' ? p.en : p.es; }
   function sub(p){ return lang==='en' ? p.es : p.en; }
   var UI = {
+    intro: {es:'Don Aurelio no tiene una veleta. Tiene un burro, y los viejos campesinos saben: las orejas nunca mienten. Pregúntele qué está haciendo el tiempo afuera — donde sea que usted esté.',
+            en:"Don Aurelio doesn't own a weather vane. He owns a burro, and old farmers know: the ears never lie. Ask him what it's doing outside — wherever you are."},
     lblPatience:{es:'Paciencia del burro hoy:', en:'Burro’s patience today:'},
     lblStreak: {es:'Racha de visitas:', en:'Visit streak:'},
     share:     {es:'Compartir el clima de hoy', en:'Share today’s weather'},

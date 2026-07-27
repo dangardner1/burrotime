@@ -628,34 +628,43 @@
   function normalize(s){
     return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); // strip accents
   }
+  var EN_MALE_VOICE_HINTS = ['daniel','david','mark','george','fred','alex','james','oliver','aaron',
+    'guy','ryan','male','-b)','-d)'];
+  var EN_FEMALE_VOICE_HINTS = ['samantha','victoria','karen','moira','tessa','zira','susan','hazel',
+    'kate','serena','allison','ava','emma','jenny','aria','female','-a)','-c)'];
   var femaleVoice = null;
   var femaleVoiceIsFemaleMatch = false;
-  function pickSpanishVoice(){
-    if(!window.speechSynthesis) return;
-    var esVoices = speechSynthesis.getVoices().filter(function(v){ return /^es/i.test(v.lang); });
+  var englishVoice = null;
+  var englishFemaleVoice = null;
+  var englishFemaleIsFemaleMatch = false;
+  function pickVoicePair(langRe, maleHints, femaleHints){
+    var voices = speechSynthesis.getVoices().filter(function(v){ return langRe.test(v.lang); });
     // Prefer on-device voices over network ones: a "remote" voice needs a
-    // live call to a speech server to actually produce Spanish-sounding
+    // live call to a speech server to actually produce native-sounding
     // audio, and privacy-hardened browsers (Brave's Shields, for one) can
     // block or spoof that network leg while still reporting the voice as
     // available — which is how you get Spanish text read in an English
-    // accent even though a matching es-* voice was "found".
-    esVoices.sort(function(a,b){ return (b.localService?1:0) - (a.localService?1:0); });
+    // accent even though a matching voice was "found".
+    voices.sort(function(a,b){ return (b.localService?1:0) - (a.localService?1:0); });
     function hints(v,list){ var n=normalize(v.name); return list.some(function(h){ return n.indexOf(h)!==-1; }); }
-    var maleMatch = esVoices.find(function(v){ return hints(v,MALE_VOICE_HINTS); });
-    spanishVoice = maleMatch
-      || esVoices.find(function(v){ return !hints(v,FEMALE_VOICE_HINTS); })
-      || esVoices[0]
-      || null;
-    var femaleMatch = esVoices.find(function(v){ return hints(v,FEMALE_VOICE_HINTS); });
-    femaleVoiceIsFemaleMatch = !!femaleMatch;
-    femaleVoice = femaleMatch
-      || esVoices.find(function(v){ return !hints(v,MALE_VOICE_HINTS); })
-      || esVoices[0]
-      || null;
+    var maleMatch = voices.find(function(v){ return hints(v,maleHints); });
+    var femaleMatch = voices.find(function(v){ return hints(v,femaleHints); });
+    return {
+      male: maleMatch || voices.find(function(v){ return !hints(v,femaleHints); }) || voices[0] || null,
+      female: femaleMatch || voices.find(function(v){ return !hints(v,maleHints); }) || voices[0] || null,
+      femaleIsMatch: !!femaleMatch
+    };
+  }
+  function pickVoices(){
+    if(!window.speechSynthesis) return;
+    var es = pickVoicePair(/^es/i, MALE_VOICE_HINTS, FEMALE_VOICE_HINTS);
+    spanishVoice = es.male; femaleVoice = es.female; femaleVoiceIsFemaleMatch = es.femaleIsMatch;
+    var en = pickVoicePair(/^en/i, EN_MALE_VOICE_HINTS, EN_FEMALE_VOICE_HINTS);
+    englishVoice = en.male; englishFemaleVoice = en.female; englishFemaleIsFemaleMatch = en.femaleIsMatch;
   }
   if(window.speechSynthesis){
-    pickSpanishVoice();
-    speechSynthesis.onvoiceschanged = pickSpanishVoice;
+    pickVoices();
+    speechSynthesis.onvoiceschanged = pickVoices;
   }
   // Brave's Shields apply fingerprinting-resistance ("farbling") to the
   // SpeechSynthesis API that can silently mangle pronunciation regardless of
@@ -692,7 +701,7 @@
     function doSpeak(){
       try{
         var u = new SpeechSynthesisUtterance(text);
-        u.lang = voice ? voice.lang : 'es-ES';
+        u.lang = voice ? voice.lang : (lang==='en' ? 'en-US' : 'es-ES');
         if(voice) u.voice = voice;
         u.rate = rate;
         u.pitch = pitch;
@@ -712,23 +721,30 @@
     }
   }
   function speakPhrase(text, onEnd){
-    // Don Aurelio: use a male-named voice when the browser happens to expose
-    // one (see pickSpanishVoice above), otherwise just the platform default
-    // at its natural pitch — different browsers/OSes handle pitch shifting
-    // too inconsistently (some ignore it outright) to reliably force a
-    // different-sounding voice, so this no longer fights that battle.
-    speakUtterance(text, spanishVoice, 0.855, 1, onEnd);
+    // Don Aurelio: use a male-named voice for the current language when the
+    // browser happens to expose one (see pickVoices above), otherwise just
+    // the platform default at its natural pitch — different browsers/OSes
+    // handle pitch shifting too inconsistently (some ignore it outright) to
+    // reliably force a different-sounding voice.
+    speakUtterance(text, lang==='en' ? englishVoice : spanishVoice, 0.855, 1, onEnd);
+  }
+  function englishTimePhrase(h24, m){
+    var h12 = h24 % 12; if(h12===0) h12=12;
+    var when = partOfDayEnglish(h24).toLowerCase();
+    return "It's " + (m===0 ? h12+" o'clock" : h12+':'+pad(m)) + ' ' + when;
   }
   function speakTime(onEnd){
     var d = new Date();
-    speakPhrase(spanishTimePhrase(d.getHours(), d.getMinutes()), onEnd);
+    speakPhrase(lang==='en' ? englishTimePhrase(d.getHours(), d.getMinutes())
+                            : spanishTimePhrase(d.getHours(), d.getMinutes()), onEnd);
   }
   function speakWoman(text){
-    // The passerby: most browsers' single default Spanish voice already
-    // reads female, so the fallback here just needs a light nudge upward
-    // for clarity rather than the male fallback's drastic correction.
-    var rate = 0.9, pitch = femaleVoiceIsFemaleMatch ? 1.05 : 1.15;
-    speakUtterance(text, femaleVoice, rate, pitch);
+    // The passerby: most browsers' single default voice already reads
+    // female, so the fallback here just needs a light nudge upward for
+    // clarity rather than the male fallback's drastic correction.
+    var isMatch = lang==='en' ? englishFemaleIsFemaleMatch : femaleVoiceIsFemaleMatch;
+    var rate = 0.9, pitch = isMatch ? 1.05 : 1.15;
+    speakUtterance(text, lang==='en' ? englishFemaleVoice : femaleVoice, rate, pitch);
   }
   /* ---------- time-of-day scenery ----------
      The clock knows the real hour, so the plaza should too: night gets a
@@ -1383,7 +1399,7 @@
     b1.textContent=pri(QUIT); b2.textContent=sub(QUIT);
 
     at(60,   function(){ stage.classList.add('walking'); });
-    at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
+    at(1650, function(){ stage.classList.add('asking'); speakWoman(pri(currentVisitor.ask)); });
     at(2500, function(){ stage.classList.add('grumbling'); bray(3); });
     at(3600, function(){ stage.classList.remove('grumbling'); stage.classList.add('burroGone'); setPatience('left'); });
     at(5400, function(){
@@ -1391,7 +1407,7 @@
       say1.textContent=pri(DUNNO);
       say2.textContent=sub(TOOK);
       stage.classList.add('telling');
-      speakPhrase('No sé. Se llevó el reloj.');
+      speakPhrase(pri({es:'No sé. Se llevó el reloj.', en:"I don't know. He took the clock."}));
     });
     at(7200, function(){ w1.textContent=pri(OH); w2.textContent=sub(OH); });
     at(8400, function(){
@@ -1456,7 +1472,7 @@
         noteCard.classList.add('show');
       }
       var shownAt = Date.now();
-      speakPhrase(line.es, function(){
+      speakPhrase(pri(line), function(){
         // whichever is stricter: the overall reveal's own hold, or this aside's own (e.g. a note's 10s)
         var revealRemaining = REVEAL_HOLD_MS - (Date.now()-revealShownAt);
         var asideRemaining = (line.holdMs||0) - (Date.now()-shownAt);
@@ -1466,7 +1482,7 @@
     }
 
     at(60,   function(){ stage.classList.add('walking'); });
-    at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
+    at(1650, function(){ stage.classList.add('asking'); speakWoman(pri(currentVisitor.ask)); });
     at(2500, function(){ stage.classList.add('reaching'); react(opts.forcedAside ? opts.forcedAside.level : Math.min(count,4)); });
     if(selfie){
       at(SELFIE_AT,     function(){ stage.classList.add('selfie','flash'); react(1); });

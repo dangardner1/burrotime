@@ -791,13 +791,13 @@
     speakPhrase(lang==='en' ? englishTimePhrase(d.getHours(), d.getMinutes())
                             : spanishTimePhrase(d.getHours(), d.getMinutes()), onEnd);
   }
-  function speakWoman(text){
+  function speakWoman(text, onEnd){
     // The passerby: most browsers' single default voice already reads
     // female, so the fallback here just needs a light nudge upward for
     // clarity rather than the male fallback's drastic correction.
     var isMatch = lang==='en' ? englishFemaleIsFemaleMatch : femaleVoiceIsFemaleMatch;
     var rate = 0.9, pitch = isMatch ? 1.05 : 1.15;
-    speakUtterance(text, lang==='en' ? englishFemaleVoice : femaleVoice, rate, pitch);
+    speakUtterance(text, lang==='en' ? englishFemaleVoice : femaleVoice, rate, pitch, onEnd);
   }
   /* ---------- time-of-day scenery ----------
      The clock knows the real hour, so the plaza should too: night gets a
@@ -1596,15 +1596,17 @@
       });
     }
 
-    at(60,   function(){ stage.classList.add('walking'); });
-    at(1650, function(){ stage.classList.add('asking'); speakWoman(pri(currentVisitor.ask)); });
-    at(2500, function(){ stage.classList.add('reaching'); react(opts.forcedAside ? opts.forcedAside.level : Math.min(count,4)); });
-    if(selfie){
-      at(SELFIE_AT,     function(){ stage.classList.add('selfie','flash'); react(1); });
-      at(SELFIE_AT+120, function(){ stage.classList.remove('flash'); stage.classList.add('flashFade'); });
-    }
-    at(3100, function(){ stage.classList.add('sighting'); stopMusicSoon(6000); });
-    at(3700, function(){
+    // The reveal (Don Aurelio's spoken answer) must never talk over the
+    // walker's still-in-progress question — speakUtterance() cancels
+    // whatever's currently speaking to start a new utterance, so firing
+    // speakTime() on a fixed timer regardless of whether she's finished
+    // was cutting her off mid-sentence. Gate it on both: the original
+    // fixed-timer floor (so the common/fast case keeps its pacing) and
+    // her speech actually having ended.
+    var walkerAskDone = false, tellingReady = false, revealStarted = false;
+    function maybeRevealTime(){
+      if(!walkerAskDone || !tellingReady || revealStarted) return;
+      revealStarted = true;
       stage.classList.add('telling');
       var now = new Date();
       var h12 = now.getHours()%12; if(h12===0) h12=12;
@@ -1614,11 +1616,24 @@
       };
       revealShownAt = Date.now();
       speakTime(tellJoke ? tellJokeAfterTime : function(){ holdSince(revealShownAt, REVEAL_HOLD_MS, finishUp); });
+      at(500, function(){
+        stage.classList.add('grumbling'); setPatience(L.p);
+        if(showSign) stage.classList.add('showSign');
+      });
+    }
+
+    at(60,   function(){ stage.classList.add('walking'); });
+    at(1650, function(){
+      stage.classList.add('asking');
+      speakWoman(pri(currentVisitor.ask), function(){ walkerAskDone = true; maybeRevealTime(); });
     });
-    at(4200, function(){
-      stage.classList.add('grumbling'); setPatience(L.p);
-      if(showSign) stage.classList.add('showSign');
-    });
+    at(2500, function(){ stage.classList.add('reaching'); react(opts.forcedAside ? opts.forcedAside.level : Math.min(count,4)); });
+    if(selfie){
+      at(SELFIE_AT,     function(){ stage.classList.add('selfie','flash'); react(1); });
+      at(SELFIE_AT+120, function(){ stage.classList.remove('flash'); stage.classList.add('flashFade'); });
+    }
+    at(3100, function(){ stage.classList.add('sighting'); stopMusicSoon(6000); });
+    at(3700, function(){ tellingReady = true; maybeRevealTime(); });
   }
 
   askBtn.addEventListener('click', function(){ run(); });

@@ -656,13 +656,13 @@
   function speakForecast(entry, tempC, real, onEnd){
     speakPhrase(pri(composeForecast(entry, tempC, real).spoken), onEnd);
   }
-  function speakWoman(text){
+  function speakWoman(text, onEnd){
     // The passerby: most browsers' single default voice already reads
     // female, so the fallback here just needs a light nudge upward for
     // clarity rather than the male fallback's drastic correction.
     var isMatch = lang==='en' ? englishFemaleIsFemaleMatch : femaleVoiceIsFemaleMatch;
     var rate = 0.9, pitch = isMatch ? 1.05 : 1.15;
-    speakUtterance(text, lang==='en' ? englishFemaleVoice : femaleVoice, rate, pitch);
+    speakUtterance(text, lang==='en' ? englishFemaleVoice : femaleVoice, rate, pitch, onEnd);
   }
   /* ---------- time-of-day scenery ----------
      The clock knows the real hour, so the plaza should too: night gets a
@@ -1499,8 +1499,25 @@
       };
     }
 
+    // The reveal (Don Aurelio's spoken forecast) must never talk over the
+    // walker's still-in-progress question — speakUtterance() cancels
+    // whatever's currently speaking to start a new utterance, so firing
+    // speakForecast() on a fixed timer regardless of whether she's
+    // finished was cutting her off mid-sentence. Gate it on both: the
+    // original fixed-timer floor (so the common/fast case keeps its
+    // pacing) and her speech actually having ended.
+    var walkerAskDone = false, tellingReady = false, revealStarted = false, revealFn = null;
+    function maybeRevealTime(){
+      if(!walkerAskDone || !tellingReady || revealStarted || !revealFn) return;
+      revealStarted = true;
+      revealFn();
+    }
+
     at(60,   function(){ stage.classList.add('walking'); });
-    at(1650, function(){ stage.classList.add('asking'); speakWoman(pri(currentVisitor.ask)); });
+    at(1650, function(){
+      stage.classList.add('asking');
+      speakWoman(pri(currentVisitor.ask), function(){ walkerAskDone = true; maybeRevealTime(); });
+    });
 
     // The forecast itself (real, at the visitor's location, or an
     // invented date-seeded fallback) is fetched asynchronously and never
@@ -1527,17 +1544,21 @@
       at(d+900, function(){ stage.classList.add('tailPull'); });
       at(d+1200, function(){
         stage.classList.remove('tailPull');
-        stage.classList.add('telling');
-        var f = composeForecast(entry, tempC, real);
-        var guessSuffix = f.guess ? (lang==='en' ? ' (GUESS)' : ' (ADIVINANDO)') : '';
-        setManLines(pri(f.main), sub(f.main) + guessSuffix);
-        lastReveal = f.main;
-        revealShownAt = Date.now();
-        speakForecast(entry, tempC, real, tellAside ? tellAsideAfterForecast(entry) : function(){ holdSince(revealShownAt, REVEAL_HOLD_MS, finishUp); });
-      });
-      at(d+1700, function(){
-        stage.classList.add('grumbling'); setPatience(L.p);
-        if(showSign) stage.classList.add('showSign');
+        revealFn = function(){
+          stage.classList.add('telling');
+          var f = composeForecast(entry, tempC, real);
+          var guessSuffix = f.guess ? (lang==='en' ? ' (GUESS)' : ' (ADIVINANDO)') : '';
+          setManLines(pri(f.main), sub(f.main) + guessSuffix);
+          lastReveal = f.main;
+          revealShownAt = Date.now();
+          speakForecast(entry, tempC, real, tellAside ? tellAsideAfterForecast(entry) : function(){ holdSince(revealShownAt, REVEAL_HOLD_MS, finishUp); });
+          at(500, function(){
+            stage.classList.add('grumbling'); setPatience(L.p);
+            if(showSign) stage.classList.add('showSign');
+          });
+        };
+        tellingReady = true;
+        maybeRevealTime();
       });
     });
   }

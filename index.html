@@ -416,10 +416,10 @@
   </div>
 
   <div class="readout">
-    <span class="lbl">Hora local</span>
+    <span class="lbl" data-i18n="lblLocal">Hora local</span>
     <span class="big" id="digital">--:--:--</span>
     <span class="lbl" id="zone">&#160;</span>
-    <span class="lbl" id="timerReadoutLbl" hidden>Aviso</span>
+    <span class="lbl" id="timerReadoutLbl" data-i18n="lblTimer" hidden>Aviso</span>
     <span class="big" id="timerCountdown" hidden>--:--</span>
   </div>
 
@@ -427,45 +427,46 @@
     <button id="ask">Manda a alguien a preguntar</button>
     <button id="sound" class="ghost" aria-pressed="true">Con sonido</button>
     <button id="music" class="ghost" aria-pressed="true">Con música</button>
+    <button id="lang" class="ghost">English</button>
   </div>
 
   <div class="status" aria-live="polite">
-    <span>Paciencia del burro hoy: <b id="patience">intacta</b></span>
+    <span><span data-i18n="lblPatience">Paciencia del burro hoy:</span> <b id="patience">intacta</b></span>
     <span class="sep">&middot;</span>
-    <span>Racha de visitas: <b id="streak">primera visita</b></span>
+    <span><span data-i18n="lblStreak">Racha de visitas:</span> <b id="streak">primera visita</b></span>
   </div>
 
   <div class="shareRow" id="shareRow">
-    <button id="shareBtn" class="ghost tiny">Compartir el burro de hoy</button>
+    <button id="shareBtn" class="ghost tiny" data-i18n="share">Compartir el burro de hoy</button>
   </div>
 
   <div class="timerBox">
-    <div class="boxLabel">Aviso</div>
+    <div class="boxLabel" data-i18n="boxTimer">Aviso</div>
     <div class="timerRow">
-      <label for="timerMinutes">Avísame en</label>
-      <input type="number" id="timerMinutes" min="1" max="180" value="20" title="Entre 1 y 180 minutos" aria-label="Minutos, entre 1 y 180"> min
-      <label for="timerNote">¿para qué?</label>
-      <input type="text" id="timerNote" maxlength="60" placeholder="el té (opcional)">
-      <button id="timerSet" class="ghost tiny">Poner aviso</button>
-      <button id="timerCancel" class="ghost tiny" hidden>Cancelar</button>
+      <label for="timerMinutes" data-i18n="remindIn">Avísame en</label>
+      <input type="number" id="timerMinutes" min="1" max="180" value="20" title="Entre 1 y 180 minutos" aria-label="Minutos, entre 1 y 180"> <span data-i18n="minutes">min</span>
+      <label for="timerNote" data-i18n="forWhat">¿para qué?</label>
+      <input type="text" id="timerNote" maxlength="60" placeholder="el té (opcional)" data-i18n-ph="notePh">
+      <button id="timerSet" class="ghost tiny" data-i18n="setBtn">Poner aviso</button>
+      <button id="timerCancel" class="ghost tiny" data-i18n="cancelBtn" hidden>Cancelar</button>
     </div>
   </div>
 
   <details class="benchBox">
-    <summary>Pruebe una reacción</summary>
+    <summary data-i18n="benchLbl">Pruebe una reacción</summary>
     <div class="bench">
-    <button class="tiny" data-snd="grumble">gruñido</button>
-    <button class="tiny" data-snd="snort">resoplido</button>
-    <button class="tiny" data-snd="bray1">rebuzno sencillo</button>
-    <button class="tiny" data-snd="bray3">rebuzno completo</button>
-    <button class="tiny" data-snd="creak">solo la cola</button>
-    <button class="tiny" data-snd="sigh">suspiro</button>
+    <button class="tiny" data-snd="grumble" data-i18n="snd_grumble">gruñido</button>
+    <button class="tiny" data-snd="snort" data-i18n="snd_snort">resoplido</button>
+    <button class="tiny" data-snd="bray1" data-i18n="snd_bray1">rebuzno sencillo</button>
+    <button class="tiny" data-snd="bray3" data-i18n="snd_bray3">rebuzno completo</button>
+    <button class="tiny" data-snd="creak" data-i18n="snd_creak">solo la cola</button>
+    <button class="tiny" data-snd="sigh" data-i18n="snd_sigh">suspiro</button>
     </div>
   </details>
 
-  <p class="soundnote" id="soundnote">No cargó una grabación — hoy el burro actúa de mimo. (AUDIO FAILED TO LOAD.)</p>
+  <p class="soundnote" id="soundnote" data-i18n="soundnote">No cargó una grabación — hoy el burro actúa de mimo. (AUDIO FAILED TO LOAD.)</p>
 
-  <footer>¿El clima? El burro lo sabe — pregunte en <a href="clima.html">El Clima</a> →</footer>
+  <footer><span data-i18n="footerLead">¿El clima? El burro lo sabe — pregunte en</span> <a href="clima.html">El Clima</a> →</footer>
 </div>
 
 <script>
@@ -489,6 +490,77 @@
   var noteEs = document.getElementById('noteEs');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* ---------- language toggle ----------
+     Flips which language is primary in every bubble and label. Don
+     Aurelio keeps SPEAKING Spanish in both modes — the toggle governs
+     what you read, not the village's voice. Shared with clima.html via
+     the same localStorage key. */
+  var LANG_KEY = 'burro-lang';
+  var lang = 'es';
+  try{ if(localStorage.getItem(LANG_KEY)==='en') lang='en'; }catch(e){}
+  var langBtn = document.getElementById('lang');
+  function pri(p){ return lang==='en' ? p.en : p.es; }
+  function sub(p){ return lang==='en' ? p.es : p.en; }
+  var UI = {
+    lblLocal:  {es:'Hora local', en:'Local time'},
+    lblTimer:  {es:'Aviso', en:'Timer'},
+    lblPatience:{es:'Paciencia del burro hoy:', en:'Burro’s patience today:'},
+    lblStreak: {es:'Racha de visitas:', en:'Visit streak:'},
+    share:     {es:'Compartir el burro de hoy', en:'Share today’s burro'},
+    boxTimer:  {es:'Aviso', en:'Reminder'},
+    remindIn:  {es:'Avísame en', en:'Remind me in'},
+    minutes:   {es:'min', en:'min'},
+    forWhat:   {es:'¿para qué?', en:'what for?'},
+    notePh:    {es:'el té (opcional)', en:'the tea (optional)'},
+    setBtn:    {es:'Poner aviso', en:'Set reminder'},
+    cancelBtn: {es:'Cancelar', en:'Cancel'},
+    benchLbl:  {es:'Pruebe una reacción', en:'Audition a reaction'},
+    snd_grumble:{es:'gruñido', en:'grumble'},
+    snd_snort: {es:'resoplido', en:'snort'},
+    snd_bray1: {es:'rebuzno sencillo', en:'simple bray'},
+    snd_bray3: {es:'rebuzno completo', en:'full bray'},
+    snd_creak: {es:'solo la cola', en:'just the tail'},
+    snd_sigh:  {es:'suspiro', en:'sigh'},
+    soundnote: {es:'No cargó una grabación — hoy el burro actúa de mimo. (AUDIO FAILED TO LOAD.)',
+                en:'A recording didn’t load — the burro is miming today. (NO CARGÓ EL AUDIO.)'},
+    footerLead:{es:'¿El clima? El burro lo sabe — pregunte en', en:'The weather? The burro knows — ask at'}
+  };
+  var ASK_LABELS = {
+    first: {es:'Manda a alguien a preguntar', en:'Send someone to ask'},
+    more:  {es:'Manda a alguien más', en:'Send someone else'},
+    again: {es:'Pregúntale otra vez.', en:'Ask him again.'}
+  };
+  function updateAskBtn(){
+    askBtn.textContent = pri(count===0 ? ASK_LABELS.first : (count>=3 ? ASK_LABELS.again : ASK_LABELS.more));
+  }
+  function updateSoundBtn(){
+    sndBtn.textContent = pri(muted ? {es:'Sin sonido',en:'Sound off'} : {es:'Con sonido',en:'Sound on'});
+  }
+  function updateMusicBtn(){
+    musicBtn.textContent = pri(musicMuted ? {es:'Sin música',en:'Music off'} : {es:'Con música',en:'Music on'});
+  }
+  function applyLang(){
+    document.documentElement.lang = lang;
+    langBtn.textContent = lang==='es' ? 'English' : 'Español'; // shows the language you'd switch TO
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for(var i=0;i<nodes.length;i++){
+      var pair = UI[nodes[i].getAttribute('data-i18n')];
+      if(pair) nodes[i].textContent = pair[lang];
+    }
+    var phNodes = document.querySelectorAll('[data-i18n-ph]');
+    for(var j=0;j<phNodes.length;j++){
+      var php = UI[phNodes[j].getAttribute('data-i18n-ph')];
+      if(php) phNodes[j].placeholder = php[lang];
+    }
+    updateAskBtn(); updateSoundBtn(); updateMusicBtn();
+    renderPatience(); renderStreak();
+  }
+  langBtn.addEventListener('click', function(){
+    lang = lang==='es' ? 'en' : 'es';
+    try{ localStorage.setItem(LANG_KEY, lang); }catch(e){}
+    applyLang();
+  });
+
   /* ---------- clock ---------- */
   var ticks = document.getElementById('ticks');
   for (var i=0;i<12;i++){
@@ -510,6 +582,12 @@
     if(h<12) return 'DE LA MAÑANA';
     if(h<20) return 'DE LA TARDE';
     return 'DE LA NOCHE';
+  }
+  function partOfDayEnglish(h){
+    if(h<6) return 'IN THE SMALL HOURS';
+    if(h<12) return 'IN THE MORNING';
+    if(h<20) return 'IN THE AFTERNOON';
+    return 'AT NIGHT';
   }
   function partOfDaySpanish(h){
     if(h<6) return 'de la madrugada';
@@ -550,34 +628,43 @@
   function normalize(s){
     return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); // strip accents
   }
+  var EN_MALE_VOICE_HINTS = ['daniel','david','mark','george','fred','alex','james','oliver','aaron',
+    'guy','ryan','male','-b)','-d)'];
+  var EN_FEMALE_VOICE_HINTS = ['samantha','victoria','karen','moira','tessa','zira','susan','hazel',
+    'kate','serena','allison','ava','emma','jenny','aria','female','-a)','-c)'];
   var femaleVoice = null;
   var femaleVoiceIsFemaleMatch = false;
-  function pickSpanishVoice(){
-    if(!window.speechSynthesis) return;
-    var esVoices = speechSynthesis.getVoices().filter(function(v){ return /^es/i.test(v.lang); });
+  var englishVoice = null;
+  var englishFemaleVoice = null;
+  var englishFemaleIsFemaleMatch = false;
+  function pickVoicePair(langRe, maleHints, femaleHints){
+    var voices = speechSynthesis.getVoices().filter(function(v){ return langRe.test(v.lang); });
     // Prefer on-device voices over network ones: a "remote" voice needs a
-    // live call to a speech server to actually produce Spanish-sounding
+    // live call to a speech server to actually produce native-sounding
     // audio, and privacy-hardened browsers (Brave's Shields, for one) can
     // block or spoof that network leg while still reporting the voice as
     // available — which is how you get Spanish text read in an English
-    // accent even though a matching es-* voice was "found".
-    esVoices.sort(function(a,b){ return (b.localService?1:0) - (a.localService?1:0); });
+    // accent even though a matching voice was "found".
+    voices.sort(function(a,b){ return (b.localService?1:0) - (a.localService?1:0); });
     function hints(v,list){ var n=normalize(v.name); return list.some(function(h){ return n.indexOf(h)!==-1; }); }
-    var maleMatch = esVoices.find(function(v){ return hints(v,MALE_VOICE_HINTS); });
-    spanishVoice = maleMatch
-      || esVoices.find(function(v){ return !hints(v,FEMALE_VOICE_HINTS); })
-      || esVoices[0]
-      || null;
-    var femaleMatch = esVoices.find(function(v){ return hints(v,FEMALE_VOICE_HINTS); });
-    femaleVoiceIsFemaleMatch = !!femaleMatch;
-    femaleVoice = femaleMatch
-      || esVoices.find(function(v){ return !hints(v,MALE_VOICE_HINTS); })
-      || esVoices[0]
-      || null;
+    var maleMatch = voices.find(function(v){ return hints(v,maleHints); });
+    var femaleMatch = voices.find(function(v){ return hints(v,femaleHints); });
+    return {
+      male: maleMatch || voices.find(function(v){ return !hints(v,femaleHints); }) || voices[0] || null,
+      female: femaleMatch || voices.find(function(v){ return !hints(v,maleHints); }) || voices[0] || null,
+      femaleIsMatch: !!femaleMatch
+    };
+  }
+  function pickVoices(){
+    if(!window.speechSynthesis) return;
+    var es = pickVoicePair(/^es/i, MALE_VOICE_HINTS, FEMALE_VOICE_HINTS);
+    spanishVoice = es.male; femaleVoice = es.female; femaleVoiceIsFemaleMatch = es.femaleIsMatch;
+    var en = pickVoicePair(/^en/i, EN_MALE_VOICE_HINTS, EN_FEMALE_VOICE_HINTS);
+    englishVoice = en.male; englishFemaleVoice = en.female; englishFemaleIsFemaleMatch = en.femaleIsMatch;
   }
   if(window.speechSynthesis){
-    pickSpanishVoice();
-    speechSynthesis.onvoiceschanged = pickSpanishVoice;
+    pickVoices();
+    speechSynthesis.onvoiceschanged = pickVoices;
   }
   // Brave's Shields apply fingerprinting-resistance ("farbling") to the
   // SpeechSynthesis API that can silently mangle pronunciation regardless of
@@ -614,7 +701,7 @@
     function doSpeak(){
       try{
         var u = new SpeechSynthesisUtterance(text);
-        u.lang = voice ? voice.lang : 'es-ES';
+        u.lang = voice ? voice.lang : (lang==='en' ? 'en-US' : 'es-ES');
         if(voice) u.voice = voice;
         u.rate = rate;
         u.pitch = pitch;
@@ -634,23 +721,30 @@
     }
   }
   function speakPhrase(text, onEnd){
-    // Don Aurelio: use a male-named voice when the browser happens to expose
-    // one (see pickSpanishVoice above), otherwise just the platform default
-    // at its natural pitch — different browsers/OSes handle pitch shifting
-    // too inconsistently (some ignore it outright) to reliably force a
-    // different-sounding voice, so this no longer fights that battle.
-    speakUtterance(text, spanishVoice, 0.855, 1, onEnd);
+    // Don Aurelio: use a male-named voice for the current language when the
+    // browser happens to expose one (see pickVoices above), otherwise just
+    // the platform default at its natural pitch — different browsers/OSes
+    // handle pitch shifting too inconsistently (some ignore it outright) to
+    // reliably force a different-sounding voice.
+    speakUtterance(text, lang==='en' ? englishVoice : spanishVoice, 0.855, 1, onEnd);
+  }
+  function englishTimePhrase(h24, m){
+    var h12 = h24 % 12; if(h12===0) h12=12;
+    var when = partOfDayEnglish(h24).toLowerCase();
+    return "It's " + (m===0 ? h12+" o'clock" : h12+':'+pad(m)) + ' ' + when;
   }
   function speakTime(onEnd){
     var d = new Date();
-    speakPhrase(spanishTimePhrase(d.getHours(), d.getMinutes()), onEnd);
+    speakPhrase(lang==='en' ? englishTimePhrase(d.getHours(), d.getMinutes())
+                            : spanishTimePhrase(d.getHours(), d.getMinutes()), onEnd);
   }
   function speakWoman(text){
-    // The passerby: most browsers' single default Spanish voice already
-    // reads female, so the fallback here just needs a light nudge upward
-    // for clarity rather than the male fallback's drastic correction.
-    var rate = 0.9, pitch = femaleVoiceIsFemaleMatch ? 1.05 : 1.15;
-    speakUtterance(text, femaleVoice, rate, pitch);
+    // The passerby: most browsers' single default voice already reads
+    // female, so the fallback here just needs a light nudge upward for
+    // clarity rather than the male fallback's drastic correction.
+    var isMatch = lang==='en' ? englishFemaleIsFemaleMatch : femaleVoiceIsFemaleMatch;
+    var rate = 0.9, pitch = isMatch ? 1.05 : 1.15;
+    speakUtterance(text, lang==='en' ? englishFemaleVoice : femaleVoice, rate, pitch);
   }
   /* ---------- time-of-day scenery ----------
      The clock knows the real hour, so the plaza should too: night gets a
@@ -697,8 +791,10 @@
     hand(document.getElementById('bigSec'),790,106,48,sDeg);
     var h12=h%12; if(h12===0) h12=12;
     if(!sayOverride){
-      document.getElementById('sayTime').textContent=(h12===1?'Es la ':'Son las ')+h12+':'+pad(m);
-      document.getElementById('sayPart').textContent=partOfDay(h);
+      var timePair = { es:(h12===1?'Es la ':'Son las ')+h12+':'+pad(m), en:'It’s '+h12+':'+pad(m) };
+      var partPair = { es:partOfDay(h), en:partOfDayEnglish(h) };
+      document.getElementById('sayTime').textContent=pri(timePair);
+      document.getElementById('sayPart').textContent=sub(partPair);
     }
     document.getElementById('digital').textContent=pad(h)+':'+pad(m)+':'+pad(s);
     applyScenery(h);
@@ -801,7 +897,7 @@
 
   sndBtn.addEventListener('click',function(){
     muted=!muted;
-    sndBtn.textContent = muted ? 'Sin sonido' : 'Con sonido';
+    updateSoundBtn();
     sndBtn.setAttribute('aria-pressed', String(!muted));
     if(!muted) primeAudio();
   });
@@ -869,7 +965,7 @@
 
   musicBtn.addEventListener('click',function(){
     musicMuted = !musicMuted;
-    musicBtn.textContent = musicMuted ? 'Sin música' : 'Con música';
+    updateMusicBtn();
     musicBtn.setAttribute('aria-pressed', String(!musicMuted));
     if(!musicMuted) playMusic();
   });
@@ -916,7 +1012,16 @@
   ];
   // L.p above stays an internal English key (compared elsewhere via ===);
   // this is only the Spanish label shown in the status line
-  var PATIENCE_LABELS = {intact:'intacta', fraying:'deteriorándose', gone:'agotada', transcendent:'trascendental'};
+  var PATIENCE_LABELS = {
+    intact:      {es:'intacta', en:'intact'},
+    fraying:     {es:'deteriorándose', en:'fraying'},
+    gone:        {es:'agotada', en:'gone'},
+    transcendent:{es:'trascendental', en:'transcendent'},
+    left:        {es:'se fue (he left)', en:'he left (se fue)'}
+  };
+  var patienceKey = 'intact'; // remembered so a language switch can re-render the current value
+  function setPatience(key){ patienceKey = key; renderPatience(); }
+  function renderPatience(){ patienceEl.textContent = pri(PATIENCE_LABELS[patienceKey]); }
   var THANKS={es:'Gracias, don Aurelio.',en:'THANK YOU — AND SORRY, BURRO.'};
   var JOKE={es:'El burro ya debería estar de baja por estrés.',en:'THAT BURRO SHOULD BE ON STRESS LEAVE BY NOW.'};
   var JOKE_CHANCE = 0.3;
@@ -1034,8 +1139,8 @@
     try{ localStorage.setItem(PATIENCE_KEY, JSON.stringify({count:count, ts:Date.now()})); }catch(e){}
   }
   if(count>0){
-    patienceEl.textContent = PATIENCE_LABELS[LINES[Math.min(count-1,LINES.length-1)].p];
-    askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Manda a alguien más';
+    setPatience(LINES[Math.min(count-1,LINES.length-1)].p);
+    updateAskBtn();
   }
 
   /* ---------- daily streak ----------
@@ -1045,7 +1150,11 @@
   var STREAK_KEY = 'burro-streak';
   var streak = 0;
   function dateKey(d){ return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
-  function streakLabel(n){ return n>0 ? (n+(n===1?' día':' días')) : 'primera visita'; }
+  function streakLabel(n){
+    if(n<=0) return lang==='en' ? 'first visit' : 'primera visita';
+    return n + (lang==='en' ? (n===1?' day':' days') : (n===1?' día':' días'));
+  }
+  function renderStreak(){ streakEl.textContent = streakLabel(streak); }
   try{
     var savedStreak = JSON.parse(localStorage.getItem(STREAK_KEY)||'null');
     if(savedStreak) streak = savedStreak.streak|0;
@@ -1164,7 +1273,7 @@
     stage.classList.remove('walking');
     running=false;
     askBtn.disabled=false;
-    askBtn.textContent = count>=3 ? 'Pregúntale otra vez.' : 'Manda a alguien más';
+    updateAskBtn();
     if(lastReveal) shareRow.classList.add('show');
     noteCard.classList.remove('show');
   }
@@ -1225,7 +1334,7 @@
       ctx.fillStyle = '#EFE3D2'; ctx.globalAlpha = .65;
       ctx.font = '22px Georgia, serif';
       var today = new Date();
-      ctx.fillText(today.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'}), W/2, 220);
+      ctx.fillText(today.toLocaleDateString(lang==='en'?'en-US':'es-ES', {weekday:'long', day:'numeric', month:'long'}), W/2, 220);
       ctx.globalAlpha = 1;
 
       var pw = 440, ph = pw * (340/560);
@@ -1234,16 +1343,16 @@
       var reveal = lastReveal || {es:'…', en:''};
       ctx.fillStyle = '#EFE3D2';
       ctx.font = 'italic 46px Georgia, serif';
-      wrapCardText(ctx, reveal.es, W/2, 620, W-220, 58);
+      wrapCardText(ctx, pri(reveal), W/2, 620, W-220, 58);
 
       ctx.fillStyle = '#E9C46A'; ctx.globalAlpha = .7;
       ctx.font = '20px ui-monospace, Menlo, monospace';
-      ctx.fillText(reveal.en, W/2, 730);
+      ctx.fillText(sub(reveal), W/2, 730);
       ctx.globalAlpha = 1;
 
       ctx.fillStyle = '#E9C46A';
       ctx.font = '26px ui-monospace, Menlo, monospace';
-      ctx.fillText(streak>0 ? ('RACHA: '+streak+(streak===1?' DÍA':' DÍAS')) : 'PRIMERA VISITA', W/2, 940);
+      ctx.fillText(streakLabel(streak).toUpperCase() + (streak>0 ? (lang==='en'?' STREAK':' DE RACHA') : ''), W/2, 940);
 
       ctx.fillStyle = '#EFE3D2'; ctx.globalAlpha = .5;
       ctx.font = '16px ui-monospace, Menlo, monospace';
@@ -1282,21 +1391,25 @@
   var say1=document.getElementById('sayTime'), say2=document.getElementById('sayPart');
 
   function runRefusal(){
-    w1.textContent=currentVisitor.ask.es; w2.textContent=currentVisitor.ask.en;
-    b1.textContent='¡Se acabó!'; b2.textContent='THAT DOES IT. I QUIT.';
+    var QUIT={es:'¡Se acabó!',en:'THAT DOES IT. I QUIT.'};
+    var DUNNO={es:'No sé…',en:'I don’t know…'};
+    var TOOK={es:'SE LLEVÓ EL RELOJ',en:'HE TOOK THE CLOCK'};
+    var OH={es:'Vaya.',en:'OH. OKAY THEN.'};
+    w1.textContent=pri(currentVisitor.ask); w2.textContent=sub(currentVisitor.ask);
+    b1.textContent=pri(QUIT); b2.textContent=sub(QUIT);
 
     at(60,   function(){ stage.classList.add('walking'); });
-    at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
+    at(1650, function(){ stage.classList.add('asking'); speakWoman(pri(currentVisitor.ask)); });
     at(2500, function(){ stage.classList.add('grumbling'); bray(3); });
-    at(3600, function(){ stage.classList.remove('grumbling'); stage.classList.add('burroGone'); patienceEl.textContent='se fue (he left)'; });
+    at(3600, function(){ stage.classList.remove('grumbling'); stage.classList.add('burroGone'); setPatience('left'); });
     at(5400, function(){
       sayOverride=true;
-      say1.textContent='No sé…';
-      say2.textContent='SE LLEVÓ EL RELOJ — HE TOOK THE CLOCK';
+      say1.textContent=pri(DUNNO);
+      say2.textContent=sub(TOOK);
       stage.classList.add('telling');
-      speakPhrase('No sé. Se llevó el reloj.');
+      speakPhrase(pri({es:'No sé. Se llevó el reloj.', en:"I don't know. He took the clock."}));
     });
-    at(7200, function(){ w1.textContent='Vaya.'; w2.textContent='OH. OKAY THEN.'; });
+    at(7200, function(){ w1.textContent=pri(OH); w2.textContent=sub(OH); });
     at(8400, function(){
       stage.classList.remove('telling','asking');
       sayOverride=false;
@@ -1328,11 +1441,11 @@
     var showSign = L.p==='transcendent' && !selfie && Math.random() < SIGN_CHANCE;
     var revealShownAt = null; // set when the time actually appears — the reveal (and any aside after it) holds at least REVEAL_HOLD_MS from here
 
-    w1.textContent=currentVisitor.ask.es; w2.textContent=currentVisitor.ask.en;
-    b1.textContent=L.es;   b2.textContent=L.en;
+    w1.textContent=pri(currentVisitor.ask); w2.textContent=sub(currentVisitor.ask);
+    b1.textContent=pri(L);   b2.textContent=sub(L);
 
     function finishUp(){
-      w1.textContent=THANKS.es; w2.textContent=THANKS.en;
+      w1.textContent=pri(THANKS); w2.textContent=sub(THANKS);
       noteCard.classList.remove('show');
       at(1200, function(){
         stage.classList.remove('reaching','sighting','telling','grumbling','asking','showSign','selfie','flash','flashFade');
@@ -1351,14 +1464,15 @@
     function tellJokeAfterTime(){
       var line = opts.forcedAside || JOKE;
       sayOverride=true;
-      say1.textContent = line.note ? line.bubbleEs : line.es;
-      say2.textContent = line.note ? line.bubbleEn : line.en;
+      var bubblePair = line.note ? {es:line.bubbleEs,en:line.bubbleEn} : line;
+      say1.textContent = pri(bubblePair);
+      say2.textContent = sub(bubblePair);
       if(line.note){
         noteEs.textContent = line.note;
         noteCard.classList.add('show');
       }
       var shownAt = Date.now();
-      speakPhrase(line.es, function(){
+      speakPhrase(pri(line), function(){
         // whichever is stricter: the overall reveal's own hold, or this aside's own (e.g. a note's 10s)
         var revealRemaining = REVEAL_HOLD_MS - (Date.now()-revealShownAt);
         var asideRemaining = (line.holdMs||0) - (Date.now()-shownAt);
@@ -1368,7 +1482,7 @@
     }
 
     at(60,   function(){ stage.classList.add('walking'); });
-    at(1650, function(){ stage.classList.add('asking'); speakWoman(currentVisitor.ask.es); });
+    at(1650, function(){ stage.classList.add('asking'); speakWoman(pri(currentVisitor.ask)); });
     at(2500, function(){ stage.classList.add('reaching'); react(opts.forcedAside ? opts.forcedAside.level : Math.min(count,4)); });
     if(selfie){
       at(SELFIE_AT,     function(){ stage.classList.add('selfie','flash'); react(1); });
@@ -1387,7 +1501,7 @@
       speakTime(tellJoke ? tellJokeAfterTime : function(){ holdSince(revealShownAt, REVEAL_HOLD_MS, finishUp); });
     });
     at(4200, function(){
-      stage.classList.add('grumbling'); patienceEl.textContent=PATIENCE_LABELS[L.p];
+      stage.classList.add('grumbling'); setPatience(L.p);
       if(showSign) stage.classList.add('showSign');
     });
   }
@@ -1433,6 +1547,8 @@
       if(f) f();
     });
   }
+
+  applyLang(); // render the saved language once everything above is initialized
 })();
 </script>
 </body>

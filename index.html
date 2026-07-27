@@ -61,13 +61,13 @@
   .readout .lbl{font-size:11px;letter-spacing:.22em;text-transform:uppercase;opacity:.55}
 
   .controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px}
-  button{font-family:Georgia,serif;font-size:16px;padding:12px 22px;border-radius:2px;cursor:pointer;
+  button,a.btn{font-family:Georgia,serif;font-size:16px;padding:12px 22px;border-radius:2px;cursor:pointer;
     border:1px solid var(--brass);background:linear-gradient(180deg,#E9C46A,#C99B45);color:#2A1B33;
-    transition:transform .15s ease, filter .15s ease}
-  button.ghost{background:transparent;color:var(--brass)}
-  button:hover{filter:brightness(1.08)}
-  button:active{transform:translateY(1px)}
-  button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+    transition:transform .15s ease, filter .15s ease;text-decoration:none;display:inline-block}
+  button.ghost,a.btn.ghost{background:transparent;color:var(--brass)}
+  button:hover,a.btn:hover{filter:brightness(1.08)}
+  button:active,a.btn:active{transform:translateY(1px)}
+  button:focus-visible,a.btn:focus-visible{outline:3px solid #fff;outline-offset:3px}
   button[disabled]{opacity:.35;cursor:default;filter:none}
 
   .status{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;
@@ -102,8 +102,16 @@
   .benchBox summary::after{content:' \25B8';opacity:.7}
   .benchBox[open] summary::after{content:' \25BE'}
   .bench{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:10px}
-  button.tiny{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.1em;
+  button.tiny,a.btn.tiny{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.1em;
     padding:10px 14px;background:transparent;color:var(--brass);border-color:rgba(233,196,106,.45)}
+
+  /* tip jar — a small honesty-box link, not gated on anything else in the
+     scene, plus a brief thank-you shown right in the page (the link itself
+     opens in a new tab, so there's no "return" moment to hang feedback on) */
+  .supportRow{margin-top:14px;text-align:center}
+  .tipThanks{display:block;margin-top:8px;font-family:ui-monospace,Menlo,monospace;
+    font-size:11px;letter-spacing:.08em;color:var(--brass);opacity:0;transition:opacity .4s ease}
+  .tipThanks.show{opacity:1}
 
   .soundnote{margin-top:8px;text-align:center;font-family:ui-monospace,Menlo,monospace;
     font-size:10px;letter-spacing:.08em;color:#E48B6B;opacity:0;max-width:56ch;
@@ -477,7 +485,18 @@
 
   <p class="soundnote" id="soundnote" data-i18n="soundnote">No cargó una grabación — hoy el burro actúa de mimo. (AUDIO FAILED TO LOAD.)</p>
 
-  <footer><span data-i18n="footerLead">¿El clima? El burro lo sabe — pregunte en</span> <a href="clima.html">El Clima</a> →</footer>
+  <div class="supportRow">
+    <!-- TODO: swap TIP_URL below (in the script) for your real Ko-fi or Stripe Payment Link -->
+    <a id="tipLink" class="btn ghost tiny" href="#" target="_blank" rel="noopener" data-i18n="tipLink">Cómprele una zanahoria al burro →</a>
+    <span class="tipThanks" id="tipThanks" aria-live="polite"></span>
+  </div>
+
+  <footer>
+    <span data-i18n="footerLead">¿El clima? El burro lo sabe — pregunte en</span> <a href="clima.html">El Clima</a> →
+    <br>
+    <!-- TODO: swap MERCH_URL below (in the script) for your real Printful/Fourthwall storefront link -->
+    <a id="merchLink" href="#" target="_blank" rel="noopener" data-i18n="merchLink">¿Se quiere llevar al burro a casa? Camisetas y más →</a>
+  </footer>
 </div>
 
 <script>
@@ -501,6 +520,26 @@
   var noteEs = document.getElementById('noteEs');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* ---------- tip jar & merch ----------
+     No backend, no accounts — just links. Replace these two placeholder
+     URLs with your real ones (a Ko-fi page or a Stripe Payment Link for
+     the tip jar; your Printful/Fourthwall storefront for merch) and
+     everything else already works. */
+  var TIP_URL = 'https://ko-fi.com/REPLACE_ME';         // TODO: your real Ko-fi or Stripe Payment Link
+  var MERCH_URL = 'https://REPLACE_ME.printful.me';     // TODO: your real merch storefront link
+  var tipLink = document.getElementById('tipLink');
+  var tipThanksEl = document.getElementById('tipThanks');
+  var merchLink = document.getElementById('merchLink');
+  tipLink.href = TIP_URL;
+  merchLink.href = MERCH_URL;
+  var TIP_THANKS = {es:'El burro le agradece.', en:'THE BURRO THANKS YOU.'};
+  tipLink.addEventListener('click', function(){
+    tipThanksEl.textContent = pri(TIP_THANKS);
+    tipThanksEl.classList.add('show');
+    anim(earNear,[{transform:'rotate(0deg)'},{transform:'rotate(-30deg)'},{transform:'rotate(0deg)'}],600);
+    setTimeout(function(){ tipThanksEl.classList.remove('show'); }, 4000);
+  });
+
   /* ---------- language toggle ----------
      Flips which language is primary in every bubble and label. Don
      Aurelio keeps SPEAKING Spanish in both modes — the toggle governs
@@ -520,6 +559,8 @@
     lblPatience:{es:'Paciencia del burro hoy:', en:'Burro’s patience today:'},
     lblStreak: {es:'Racha de visitas:', en:'Visit streak:'},
     share:     {es:'Compartir el burro de hoy', en:'Share today’s burro'},
+    tipLink:   {es:'Cómprele una zanahoria al burro →', en:'Buy the burro a carrot →'},
+    merchLink: {es:'¿Se quiere llevar al burro a casa? Camisetas y más →', en:'Want to take the burro home? T-shirts and more →'},
     boxTimer:  {es:'Aviso', en:'Reminder'},
     remindIn:  {es:'Avísame en', en:'Remind me in'},
     minutes:   {es:'min', en:'min'},

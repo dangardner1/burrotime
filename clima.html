@@ -134,11 +134,11 @@
   .showSign #protestSign{opacity:1}
   .dozing #burroEyelid{opacity:1}
   .dozing #thoughtBubble{opacity:1;animation:dozeFade 4s ease-in-out infinite}
-  .burroGone #thoughtBubble{opacity:1}
+  .burroGone #thoughtBubble,.punchline #thoughtBubble{opacity:1}
   #carrotIcon{opacity:1;transition:opacity .3s ease}
   #thoughtLine1,#thoughtLine2{opacity:0;transition:opacity .3s ease}
-  .burroGone #carrotIcon{opacity:0}
-  .burroGone #thoughtLine1,.burroGone #thoughtLine2{opacity:1}
+  .burroGone #carrotIcon,.punchline #carrotIcon{opacity:0}
+  .burroGone #thoughtLine1,.burroGone #thoughtLine2,.punchline #thoughtLine1,.punchline #thoughtLine2{opacity:1}
 
   #beamCore{stroke-dasharray:7 9;animation:march 1.1s linear infinite}
   @keyframes march{to{stroke-dashoffset:-32}}
@@ -1175,6 +1175,18 @@
     {es:'Esto se sentía necesario.', en:'THIS FELT NECESSARY.'}
   ];
 
+  // the burro's silent punchline once the reading is over — the magnifier's
+  // weather glyph (upper right) has just faded out and the music's been
+  // quiet for a while by now (see finishUp's stopMusicSoon, called way
+  // earlier at the sighting beat)
+  var EPILOGUE_THOUGHTS = [
+    {es:'Otra vez. Ya sabía el clima.', en:'AGAIN. I ALREADY KNEW THE WEATHER.'},
+    {es:'Silencio. Por fin.', en:'SILENCE. FINALLY.'},
+    {es:'Este trabajo no lo pedí yo.', en:"I DIDN'T ASK FOR THIS JOB."},
+    {es:'¿Alguien más oyó eso? No. Bien.', en:'DID ANYONE ELSE HEAR THAT? NO? GOOD.'},
+    {es:'Un burro cualquiera, sin más.', en:'JUST A REGULAR DONKEY, HONESTLY.'}
+  ];
+
   /* ---------- the burro remembers ----------
      Patience persists across visits: six quiet hours and all is forgiven. */
   var PATIENCE_KEY = 'burro-patience-clima';
@@ -1425,8 +1437,15 @@
       at(1200, function(){
         stage.classList.remove('reaching','sighting','telling','grumbling','asking','showSign','selfie','flash','flashFade','tailPull');
         sayOverride=false;
+        // the magnifier's weather glyph (upper right) has just faded out and
+        // the music's long since gone quiet (stopMusicSoon fired back at the
+        // sighting beat) — a silent punchline from the burro before things reset
+        var thought = EPILOGUE_THOUGHTS[Math.floor(Math.random()*EPILOGUE_THOUGHTS.length)];
+        setThoughtLines(pri(thought), sub(thought));
+        stage.classList.add('punchline');
       });
-      at(1700, endScene);
+      at(4800, function(){ stage.classList.remove('punchline'); });
+      at(5300, endScene);
     }
 
     // the aside cites the folklore behind this forecast — a full sentence

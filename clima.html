@@ -439,9 +439,9 @@
 
   <footer>
     <span data-i18n="footerLead">¿La hora? Pregunte en</span> <a href="./">Hora Burra</a> →
-    <br>
+    <br hidden id="merchBreak">
     <!-- TODO: swap MERCH_URL below (in the script) for your real Printful/Fourthwall storefront link -->
-    <a id="merchLink" href="#" target="_blank" rel="noopener" data-i18n="merchLink">¿Se quiere llevar al burro a casa? Camisetas y más →</a>
+    <a id="merchLink" href="#" target="_blank" rel="noopener" data-i18n="merchLink" hidden>¿Se quiere llevar al burro a casa? Camisetas y más →</a>
   </footer>
 </div>
 
@@ -716,6 +716,31 @@
   var pools = {};      // small per-file pool of <audio> elements so overlapping cues don't cut each other off
   var POOL_SIZE = 3;
 
+  // Safari/WebKit (and some Chromium-based browsers, e.g. Edge, in
+  // practice) require an <audio> element's play() to happen synchronously
+  // within a user gesture, or later plays (like the ones clip() fires from
+  // a setTimeout deep into the ask animation) can silently fail — not just
+  // for that element's very first play ever, but seemingly per browser-side
+  // "is this interaction still fresh" bookkeeping, so a pool element primed
+  // during an earlier click isn't reliably trusted for a setTimeout-deferred
+  // play() several clicks later. So every element gets this muted
+  // play-then-immediately-pause touch both when it's first created AND
+  // again on every subsequent click (see rearmAudio(), called from run()).
+  // Not waiting on the play() promise before pausing/unmuting is
+  // deliberate: if a real clip() call reused this same element (e.g. on a
+  // slow connection, right around the ask animation's 2.5s mark) before the
+  // promise settled, a delayed unlock handler would pause/reset the
+  // element out from under the real playback that had already started.
+  function armElement(el){
+    el.muted = true;
+    try{
+      var unlockPromise = el.play();
+      if(unlockPromise && unlockPromise.catch) unlockPromise.catch(function(){});
+    }catch(e){}
+    el.pause();
+    el.currentTime = 0;
+    el.muted = false;
+  }
   function primeAudio(){
     Object.keys(FILES).forEach(function(key){
       if(pools[key]) return;
@@ -730,26 +755,21 @@
           soundNote.classList.add('show');
         };}(key));
         pools[key].push(el);
-        // Safari/WebKit require each <audio> element's first play() to happen
-        // synchronously within a user gesture, or later plays (like the ones
-        // clip() fires from a setTimeout deep into the ask animation) silently
-        // fail. primeAudio() is now called at click time (see run()), so
-        // unlock every pool element here — muted play, then immediately
-        // pause without waiting on the play() promise. Waiting for that
-        // promise before pausing/unmuting left a race: if a real clip()
-        // call reused this same element (e.g. on a slow connection, right
-        // around the ask animation's 2.5s mark) before the promise settled,
-        // the delayed unlock handler would pause/reset the element out from
-        // under the real playback that had already started.
-        el.muted = true;
-        try{
-          var unlockPromise = el.play();
-          if(unlockPromise && unlockPromise.catch) unlockPromise.catch(function(){});
-        }catch(e){}
-        el.pause();
-        el.currentTime = 0;
-        el.muted = false;
+        armElement(el);
       }
+    });
+  }
+  // Re-touch every already-created pool element on each fresh user gesture
+  // (every "ask" click), not just once ever — so a donkey sound scheduled
+  // later in that same click's scene (via setTimeout, well past the
+  // original gesture) reliably plays instead of occasionally being silently
+  // dropped by a browser that only trusts recently-gestured elements.
+  // Elements currently mid-playback are left alone.
+  function rearmAudio(){
+    Object.keys(pools).forEach(function(key){
+      pools[key].forEach(function(el){
+        if(el.paused) armElement(el);
+      });
     });
   }
   function nextPlayer(key){
@@ -1426,7 +1446,7 @@
       var thought = PARTING_THOUGHTS[Math.floor(Math.random()*PARTING_THOUGHTS.length)];
       setThoughtLines(pri(thought), sub(thought));
     });
-    at(6600, function(){
+    at(10600, function(){
       sayOverride=true;
       // the full explanation goes in #noteCard — "THE BURRO REFUSED TO SAY
       // ANY MORE" alone overflows the tiny bubble as either language's subtitle
@@ -1436,14 +1456,14 @@
       stage.classList.add('telling');
       speakPhrase(pri(REFUSED_FULL));
     });
-    at(8400, function(){ setWalkerLines(pri(OH), sub(OH)); });
-    at(9600, function(){
+    at(12400, function(){ setWalkerLines(pri(OH), sub(OH)); });
+    at(13600, function(){
       stage.classList.remove('telling','asking');
       sayOverride=false;
       noteCard.classList.remove('show');
       stage.classList.remove('burroGone'); // he comes back — he lives here
     });
-    at(11800, endScene);
+    at(15800, endScene);
   }
 
   function run(){
@@ -1451,6 +1471,7 @@
     wakeUp();
     unlockSpeech();
     primeAudio();
+    rearmAudio();
     playMusic();
     running=true; askBtn.disabled=true;
     clearAll();

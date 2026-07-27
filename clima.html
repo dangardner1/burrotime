@@ -1446,7 +1446,7 @@
       var thought = PARTING_THOUGHTS[Math.floor(Math.random()*PARTING_THOUGHTS.length)];
       setThoughtLines(pri(thought), sub(thought));
     });
-    at(6600, function(){
+    at(10600, function(){
       sayOverride=true;
       // the full explanation goes in #noteCard — "THE BURRO REFUSED TO SAY
       // ANY MORE" alone overflows the tiny bubble as either language's subtitle
@@ -1456,14 +1456,14 @@
       stage.classList.add('telling');
       speakPhrase(pri(REFUSED_FULL));
     });
-    at(8400, function(){ setWalkerLines(pri(OH), sub(OH)); });
-    at(9600, function(){
+    at(12400, function(){ setWalkerLines(pri(OH), sub(OH)); });
+    at(13600, function(){
       stage.classList.remove('telling','asking');
       sayOverride=false;
       noteCard.classList.remove('show');
       stage.classList.remove('burroGone'); // he comes back — he lives here
     });
-    at(11800, endScene);
+    at(15800, endScene);
   }
 
   function run(){

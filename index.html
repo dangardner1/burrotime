@@ -793,8 +793,7 @@
     if(!sayOverride){
       var timePair = { es:(h12===1?'Es la ':'Son las ')+h12+':'+pad(m), en:'It’s '+h12+':'+pad(m) };
       var partPair = { es:partOfDay(h), en:partOfDayEnglish(h) };
-      document.getElementById('sayTime').textContent=pri(timePair);
-      document.getElementById('sayPart').textContent=sub(partPair);
+      setManLines(pri(timePair), sub(partPair));
     }
     document.getElementById('digital').textContent=pad(h)+':'+pad(m)+':'+pad(s);
     applyScenery(h);
@@ -1025,6 +1024,10 @@
   var THANKS={es:'Gracias, don Aurelio.',en:'THANK YOU — AND SORRY, BURRO.'};
   var JOKE={es:'El burro ya debería estar de baja por estrés.',en:'THAT BURRO SHOULD BE ON STRESS LEAVE BY NOW.'};
   var JOKE_CHANCE = 0.3;
+  // shown in Don Aurelio's bubble in place of a full aside sentence that's
+  // too long to fit — the full sentence goes in #noteCard instead, same
+  // pattern the timer note already uses (see tellJokeAfterTime)
+  var ASIDE_LEADIN = {es:'Y además…', en:'And also…'};
 
   // the burro's aside when a user-set timer wakes him, themed to how long
   // he was left waiting — used instead of the random JOKE for that scene
@@ -1126,6 +1129,22 @@
   var w1=document.getElementById('walkerLine1'), w2=document.getElementById('walkerLine2');
   var b1=document.getElementById('burroLine1'), b2=document.getElementById('burroLine2');
   var count=0, running=false, timers=[];
+
+  // keeps dynamic bubble text from running past its fixed-size SVG bubble —
+  // translated copy, different visitor lines, etc. all vary in length, so
+  // rather than risk overflow this shrinks the font down to a floor
+  function fitBubbleText(el, text, maxWidth, minSize){
+    var base = el.__baseFontSize || (el.__baseFontSize = parseFloat(el.getAttribute('font-size')));
+    el.setAttribute('font-size', base);
+    el.textContent = text;
+    if(el.getComputedTextLength() > maxWidth){
+      el.setAttribute('font-size', Math.max(minSize, base * maxWidth / el.getComputedTextLength()));
+    }
+  }
+  var WALKER_MAXW = 204, BURRO_MAXW = 204; // bubble rect width (228) minus padding
+  var MAN_MAXW = 134; // bubble rect width (158) minus padding
+  function setWalkerLines(big, small){ fitBubbleText(w1, big, WALKER_MAXW, 10); fitBubbleText(w2, small, WALKER_MAXW, 7); }
+  function setBurroLines(big, small){ fitBubbleText(b1, big, BURRO_MAXW, 10); fitBubbleText(b2, small, BURRO_MAXW, 7); }
 
   /* ---------- the burro remembers ----------
      Patience persists across visits: six quiet hours and all is forgiven. */
@@ -1389,14 +1408,20 @@
   var SELFIE_CHANCE = 0.5;
   var SELFIE_AT = 2800;
   var say1=document.getElementById('sayTime'), say2=document.getElementById('sayPart');
+  // looked up fresh (rather than closing over say1/say2) since this is also
+  // called from tick(), which starts running before say1/say2 are assigned
+  function setManLines(big, small){
+    fitBubbleText(document.getElementById('sayTime'), big, MAN_MAXW, 11);
+    fitBubbleText(document.getElementById('sayPart'), small, MAN_MAXW, 7);
+  }
 
   function runRefusal(){
     var QUIT={es:'¡Se acabó!',en:'THAT DOES IT. I QUIT.'};
     var DUNNO={es:'No sé…',en:'I don’t know…'};
     var TOOK={es:'SE LLEVÓ EL RELOJ',en:'HE TOOK THE CLOCK'};
     var OH={es:'Vaya.',en:'OH. OKAY THEN.'};
-    w1.textContent=pri(currentVisitor.ask); w2.textContent=sub(currentVisitor.ask);
-    b1.textContent=pri(QUIT); b2.textContent=sub(QUIT);
+    setWalkerLines(pri(currentVisitor.ask), sub(currentVisitor.ask));
+    setBurroLines(pri(QUIT), sub(QUIT));
 
     at(60,   function(){ stage.classList.add('walking'); });
     at(1650, function(){ stage.classList.add('asking'); speakWoman(pri(currentVisitor.ask)); });
@@ -1404,12 +1429,11 @@
     at(3600, function(){ stage.classList.remove('grumbling'); stage.classList.add('burroGone'); setPatience('left'); });
     at(5400, function(){
       sayOverride=true;
-      say1.textContent=pri(DUNNO);
-      say2.textContent=sub(TOOK);
+      setManLines(pri(DUNNO), sub(TOOK));
       stage.classList.add('telling');
       speakPhrase(pri({es:'No sé. Se llevó el reloj.', en:"I don't know. He took the clock."}));
     });
-    at(7200, function(){ w1.textContent=pri(OH); w2.textContent=sub(OH); });
+    at(7200, function(){ setWalkerLines(pri(OH), sub(OH)); });
     at(8400, function(){
       stage.classList.remove('telling','asking');
       sayOverride=false;
@@ -1441,11 +1465,11 @@
     var showSign = L.p==='transcendent' && !selfie && Math.random() < SIGN_CHANCE;
     var revealShownAt = null; // set when the time actually appears — the reveal (and any aside after it) holds at least REVEAL_HOLD_MS from here
 
-    w1.textContent=pri(currentVisitor.ask); w2.textContent=sub(currentVisitor.ask);
-    b1.textContent=pri(L);   b2.textContent=sub(L);
+    setWalkerLines(pri(currentVisitor.ask), sub(currentVisitor.ask));
+    setBurroLines(pri(L), sub(L));
 
     function finishUp(){
-      w1.textContent=pri(THANKS); w2.textContent=sub(THANKS);
+      setWalkerLines(pri(THANKS), sub(THANKS));
       noteCard.classList.remove('show');
       at(1200, function(){
         stage.classList.remove('reaching','sighting','telling','grumbling','asking','showSign','selfie','flash','flashFade');
@@ -1458,19 +1482,18 @@
     // starts once the live time reading has actually finished speaking, so
     // it can never cut the time announcement off mid-sentence. A user-set
     // timer substitutes its own themed line here instead of the random JOKE.
-    // A note is spoken in full but shown two ways: a short lead-in in the
-    // fixed-width SVG bubble, and the full text in the wrapping #noteCard
-    // overlay, since arbitrary-length user text can't fit the SVG bubble.
+    // The aside is spoken in full but shown two ways: a short lead-in in the
+    // fixed-width SVG bubble, and the full sentence in the wrapping
+    // #noteCard overlay, since a full sentence in either language routinely
+    // runs past the tiny bubble — a note gets its own lead-in, everything
+    // else (JOKE, the timer's wait-themed lines) shares a generic one.
     function tellJokeAfterTime(){
       var line = opts.forcedAside || JOKE;
       sayOverride=true;
-      var bubblePair = line.note ? {es:line.bubbleEs,en:line.bubbleEn} : line;
-      say1.textContent = pri(bubblePair);
-      say2.textContent = sub(bubblePair);
-      if(line.note){
-        noteEs.textContent = line.note;
-        noteCard.classList.add('show');
-      }
+      var lead = line.note ? {es:line.bubbleEs,en:line.bubbleEn} : ASIDE_LEADIN;
+      setManLines(pri(lead), sub(lead));
+      noteEs.textContent = line.note || pri(line);
+      noteCard.classList.add('show');
       var shownAt = Date.now();
       speakPhrase(pri(line), function(){
         // whichever is stricter: the overall reveal's own hold, or this aside's own (e.g. a note's 10s)

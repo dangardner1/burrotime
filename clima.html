@@ -44,6 +44,16 @@
     overflow:hidden;background:#2A1B33;box-shadow:0 24px 60px rgba(0,0,0,.55)}
   svg{display:block;width:100%;height:auto}
 
+  /* an aside's own card — plain HTML instead of fixed-width SVG text, so a
+     full sentence in either language always wraps and stays fully visible
+     instead of overflowing the little speech-bubble text element */
+  .noteCard{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
+    max-width:min(560px,86%);background:#EFE3D2;border-radius:10px;
+    padding:10px 18px;text-align:center;opacity:0;pointer-events:none;
+    transition:opacity .4s ease;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  .noteCard.show{opacity:1}
+  .noteEs{font-family:Georgia,serif;font-size:clamp(14px,4vw,18px);color:#2A1B33;overflow-wrap:break-word}
+
   .readout{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:baseline;justify-content:center;
     margin-top:16px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
   .readout .big{font-size:clamp(26px,6vw,38px);color:var(--brass);font-variant-numeric:tabular-nums;letter-spacing:.04em}
@@ -369,6 +379,9 @@
         </g>
       </g>
     </svg>
+    <div id="noteCard" class="noteCard" aria-live="polite">
+      <div class="noteEs" id="noteEs"></div>
+    </div>
   </div>
 
   <div class="controls">
@@ -416,6 +429,8 @@
   var streakEl = document.getElementById('streak');
   var shareRow = document.getElementById('shareRow');
   var shareBtn = document.getElementById('shareBtn');
+  var noteCard = document.getElementById('noteCard');
+  var noteEs = document.getElementById('noteEs');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- language toggle ----------
@@ -924,11 +939,17 @@
   // about a guessed forecast is pushed into the small EN subtitle rather
   // than crowding the main Spanish line.
   function composeForecast(entry, tempC, real){
+    // the "guessed" admission is kept out of `main` (rather than appended
+    // to the `en` string) since `main` can land as either the primary or
+    // the subtitle line depending on language mode — folding it in there
+    // would sometimes make it the far-longer PRIMARY line and badly
+    // overflow the bubble; it's added back in, subtitle-only, at display
     return {
       main:{ es:Math.round(tempC)+' grados, '+entry.desc.es+'.',
-             en:Math.round(tempC)+'°C, '+entry.desc.en+(real?'':' (GUESS)') },
+             en:Math.round(tempC)+'°C, '+entry.desc.en+'.' },
       spoken:{ es:Math.round(tempC)+' grados, '+entry.desc.es+'.',
                en:Math.round(tempC)+' degrees, '+entry.desc.en.toLowerCase()+'.' },
+      guess: !real,
       sign: entry.sign
     };
   }
@@ -1096,6 +1117,38 @@
   var b1=document.getElementById('burroLine1'), b2=document.getElementById('burroLine2');
   var count=0, running=false, timers=[];
 
+  // keeps dynamic bubble text from running past its fixed-size SVG bubble —
+  // translated copy, different visitor lines, etc. all vary in length, so
+  // rather than risk overflow this shrinks the font down to a floor
+  function fitBubbleText(el, text, maxWidth, minSize){
+    var base = el.__baseFontSize || (el.__baseFontSize = parseFloat(el.getAttribute('font-size')));
+    el.setAttribute('font-size', base);
+    el.textContent = text;
+    if(el.getComputedTextLength() > maxWidth){
+      el.setAttribute('font-size', Math.max(minSize, base * maxWidth / el.getComputedTextLength()));
+    }
+  }
+  var WALKER_MAXW = 204, BURRO_MAXW = 204; // bubble rect width (228) minus padding
+  var MAN_MAXW = 150; // bubble rect width (174) minus padding
+  function setWalkerLines(big, small){ fitBubbleText(w1, big, WALKER_MAXW, 10); fitBubbleText(w2, small, WALKER_MAXW, 7); }
+  function setBurroLines(big, small){ fitBubbleText(b1, big, BURRO_MAXW, 10); fitBubbleText(b2, small, BURRO_MAXW, 7); }
+  // looked up fresh (rather than closing over say1/say2, declared further
+  // below) in case anything ever calls this before that assignment runs
+  function setManLines(big, small){
+    fitBubbleText(document.getElementById('sayMain'), big, MAN_MAXW, 11);
+    fitBubbleText(document.getElementById('sayDetail'), small, MAN_MAXW, 7);
+  }
+  // Don Aurelio's asides (the weather folklore line, the refusal) run past
+  // the tiny bubble as a full sentence in either language — same fallback
+  // index.html's timer note uses: a short lead-in in the bubble, the full
+  // sentence in the wrapping #noteCard overlay below the stage.
+  var ASIDE_LEADIN = {es:'Y además…', en:'And also…'};
+  function showAside(pair){
+    setManLines(pri(ASIDE_LEADIN), sub(ASIDE_LEADIN));
+    noteEs.textContent = pri(pair);
+    noteCard.classList.add('show');
+  }
+
   /* ---------- the burro remembers ----------
      Patience persists across visits: six quiet hours and all is forgiven. */
   var PATIENCE_KEY = 'burro-patience-clima';
@@ -1164,6 +1217,7 @@
     askBtn.disabled=false;
     updateAskBtn();
     if(lastReveal) shareRow.classList.add('show');
+    noteCard.classList.remove('show');
   }
 
   /* ---------- shareable daily card ----------
@@ -1280,10 +1334,10 @@
   function runRefusal(){
     var QUIT={es:'¡No soy un barómetro!',en:'I AM NOT A BAROMETER!'};
     var DUNNO={es:'No sé…',en:'I don’t know…'};
-    var REFUSED={es:'EL BURRO SE NEGÓ A DECIR MÁS',en:'THE BURRO REFUSED TO SAY ANY MORE'};
+    var REFUSED_FULL={es:'No sé. El burro se negó a decir más.', en:"I don't know. The burro refused to say more."};
     var OH={es:'Vaya.',en:'OH. OKAY THEN.'};
-    w1.textContent=pri(currentVisitor.ask); w2.textContent=sub(currentVisitor.ask);
-    b1.textContent=pri(QUIT); b2.textContent=sub(QUIT);
+    setWalkerLines(pri(currentVisitor.ask), sub(currentVisitor.ask));
+    setBurroLines(pri(QUIT), sub(QUIT));
 
     at(60,   function(){ stage.classList.add('walking'); });
     at(1650, function(){ stage.classList.add('asking'); speakWoman(pri(currentVisitor.ask)); });
@@ -1291,15 +1345,19 @@
     at(3600, function(){ stage.classList.remove('grumbling'); stage.classList.add('burroGone'); setPatience('left'); });
     at(5400, function(){
       sayOverride=true;
-      say1.textContent=pri(DUNNO);
-      say2.textContent=sub(REFUSED);
+      // the full explanation goes in #noteCard — "THE BURRO REFUSED TO SAY
+      // ANY MORE" alone overflows the tiny bubble as either language's subtitle
+      setManLines(pri(DUNNO), sub(DUNNO));
+      noteEs.textContent = pri(REFUSED_FULL);
+      noteCard.classList.add('show');
       stage.classList.add('telling');
-      speakPhrase(pri({es:'No sé. El burro se negó a decir más.', en:"I don't know. The burro refused to say more."}));
+      speakPhrase(pri(REFUSED_FULL));
     });
-    at(7200, function(){ w1.textContent=pri(OH); w2.textContent=sub(OH); });
+    at(7200, function(){ setWalkerLines(pri(OH), sub(OH)); });
     at(8400, function(){
       stage.classList.remove('telling','asking');
       sayOverride=false;
+      noteCard.classList.remove('show');
       stage.classList.remove('burroGone'); // he comes back — he lives here
     });
     at(10600, endScene);
@@ -1327,11 +1385,12 @@
     var showSign = L.p==='transcendent' && !selfie && Math.random() < SIGN_CHANCE;
     var revealShownAt = null; // set when the forecast actually appears — it (and any aside after it) holds at least REVEAL_HOLD_MS from here
 
-    w1.textContent=pri(currentVisitor.ask); w2.textContent=sub(currentVisitor.ask);
-    b1.textContent=pri(L);   b2.textContent=sub(L);
+    setWalkerLines(pri(currentVisitor.ask), sub(currentVisitor.ask));
+    setBurroLines(pri(L), sub(L));
 
     function finishUp(){
-      w1.textContent=pri(THANKS); w2.textContent=sub(THANKS);
+      setWalkerLines(pri(THANKS), sub(THANKS));
+      noteCard.classList.remove('show');
       at(1200, function(){
         stage.classList.remove('reaching','sighting','telling','grumbling','asking','showSign','selfie','flash','flashFade','tailPull');
         sayOverride=false;
@@ -1339,12 +1398,13 @@
       at(1700, endScene);
     }
 
-    // the aside cites the folklore behind this forecast, in Don Aurelio's
-    // own bubble — only starts once the forecast has actually finished
-    // speaking, so it can never cut the reading off mid-sentence
+    // the aside cites the folklore behind this forecast — a full sentence
+    // in either language routinely runs past Don Aurelio's tiny bubble, so
+    // it's shown in #noteCard instead (see showAside), same as index.html's
+    // timer note
     function tellAsideAfterForecast(entry){
       return function(){
-        sayOverride=true; say1.textContent=pri(entry.sign); say2.textContent=sub(entry.sign);
+        sayOverride=true; showAside(entry.sign);
         speakPhrase(pri(entry.sign), function(){ holdSince(revealShownAt, REVEAL_HOLD_MS, finishUp); });
       };
     }
@@ -1379,7 +1439,8 @@
         stage.classList.remove('tailPull');
         stage.classList.add('telling');
         var f = composeForecast(entry, tempC, real);
-        say1.textContent = pri(f.main); say2.textContent = sub(f.main);
+        var guessSuffix = f.guess ? (lang==='en' ? ' (GUESS)' : ' (ADIVINANDO)') : '';
+        setManLines(pri(f.main), sub(f.main) + guessSuffix);
         lastReveal = f.main;
         revealShownAt = Date.now();
         speakForecast(entry, tempC, real, tellAside ? tellAsideAfterForecast(entry) : function(){ holdSince(revealShownAt, REVEAL_HOLD_MS, finishUp); });

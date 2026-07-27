@@ -669,14 +669,11 @@
     speechSynthesis.onvoiceschanged = pickVoices;
   }
   // Brave's Shields apply fingerprinting-resistance ("farbling") to the
-  // SpeechSynthesis API that can silently mangle pronunciation regardless of
-  // the voice/lang requested — feature-detected via Brave's own documented
-  // navigator.brave.isBrave() API, since Brave's user agent otherwise
-  // disguises itself as plain Chrome.
-  var isBraveBrowser = false;
-  if(navigator.brave && navigator.brave.isBrave){
-    navigator.brave.isBrave().then(function(v){ isBraveBrowser = !!v; }).catch(function(){});
-  }
+  // SpeechSynthesis API that can occasionally mangle pronunciation
+  // regardless of the voice/lang requested. Speech still plays there by
+  // default — if it sounds off, the existing "Con sonido" mute toggle
+  // (below, via `muted`) already covers speech as well as sound effects,
+  // so no special Brave-only escape hatch is needed.
 
   var speaking = false;
   var speechUnlocked = false;
@@ -684,7 +681,7 @@
     // Safari/iOS only allow speak() when it's a direct result of a user
     // gesture — priming it here (inside the click handler) unlocks it for
     // the later speakTime() call that fires from a setTimeout.
-    if(speechUnlocked || isBraveBrowser || !window.speechSynthesis) return;
+    if(speechUnlocked || !window.speechSynthesis) return;
     speechUnlocked = true;
     try{
       var warm = new SpeechSynthesisUtterance(' ');
@@ -693,10 +690,10 @@
     }catch(e){}
   }
   function speakUtterance(text, voice, rate, pitch, onEnd){
-    // Even when speech can't actually play (muted, Brave, unsupported), any
+    // Even when speech can't actually play (muted, unsupported), any
     // caller chaining work off onEnd must still get to run — otherwise a
     // scene that waits on speech completion would hang forever.
-    if(muted || isBraveBrowser || !window.speechSynthesis){
+    if(muted || !window.speechSynthesis){
       if(onEnd) setTimeout(onEnd, 0);
       return;
     }
